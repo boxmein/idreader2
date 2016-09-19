@@ -8,8 +8,11 @@
 HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
+
+CHAR cFormatBuffer[FORMAT_BUFFER_SIZE];
 WCHAR szFormatBuffer[FORMAT_BUFFER_SIZE];
-BOOL redrawingWindow = false;
+
+bool shouldClose = false;
 
 const wchar_t* statusString = L"Laeb...";
 
@@ -35,11 +38,7 @@ enum readerState { INITIAL, WAITING_FOR_CARD, CARD_ATTACHED, DONE_READING };
 
 /// This is the data we get to collect off the reader.
 struct person {
-	wchar_t firstName[30];
-	wchar_t lastName[25];
-	wchar_t gender;
-	wchar_t idNumber[9];
-	wchar_t birthDate[10];
+	wchar_t idNumber[EID_LEN_IDNUMBER + 1];
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -85,6 +84,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 void sCardReaderThread(HWND hWnd) {
 	enum readerState readerState = INITIAL;
 	struct person person;
+	
+	ZeroMemory(&person, sizeof(struct person));
 	/// Any smart card related function will return an error code.
 	LONG sCardErrorCode;
 	/// To interact with the smart card, a context is required.
@@ -106,24 +107,32 @@ void sCardReaderThread(HWND hWnd) {
 	DWORD sCardActiveProtocol;
 	/// Generic byte buffer for data that's received from the smart card.
 	BYTE sCardRecvBuffer[SCARD_RECVSIZE];
+
 	/// Use for passing the size of the receive buffer, and receiving the amount of data
 	/// received.
 	DWORD sCardRecvBytes = 0xFFFFFFFF;
-
-	HANDLE outputFile;
-	BOOL fileWriteHasError = false;
-	DWORD bytesWritten = 0;
 	
-	// 1 line max 192 wchars
-	wchar_t lineBuffer[LINE_BUFFER_SIZE];
+	/// Time handling structs
+	time_t currentTimet;
+	tm currentTime;
 
-	outputFile = CreateFile(L"data.log", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	/// File handle for output
+	std::wofstream outputFile;
 
-	if (outputFile == INVALID_HANDLE_VALUE) {
-		OutputDebugString(L"Failed to open new file data.log\n");
+	// TODO: file output for data/logs
+
+	// 0. open file for output
+	currentTimet = time(0);
+	localtime_s(&currentTime, &currentTimet);
+	wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"andmed-%Y-%m-%d-%H-%M-%S.csv", &currentTime);
+	outputFile.open(szFormatBuffer, std::ios_base::app);
+	// enable throwing on the failbit
+	outputFile.exceptions(std::ios::badbit | std::ios::failbit);
+
+	if (!outputFile.is_open()) {
+		OutputDebugString(L"data file did not open. :/\n");
 		goto teardown;
 	}
-
 
 	// 1. establish a security context
 	sCardErrorCode = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &sCardContext);
@@ -224,71 +233,13 @@ void sCardReaderThread(HWND hWnd) {
 			}
 
 			SCARD_FATAL_ERROR(hWnd, sCardErrorCode);
-			
 
-			// 1. Read last name, convert it to multibyte string and copy it to the person struct
-			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_LAST_NAME, sCardRecvBuffer, &sCardRecvBytes);
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, 15);
-
-			if (wmemcpy_s(person.lastName, 10, szFormatBuffer, 10) != 0) {
-				OutputDebugString(L"Failed to copy received last name over to person object.\n");
-			}
-
-			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
-				OutputDebugString(L"Card was removed - waiting for new card...\n");
-				readerState = WAITING_FOR_CARD;
-				continue;
-			}
-
-			SCARD_FATAL_ERROR(hWnd, sCardErrorCode);
-
-			
-
-			// 2. Read first name, convert it to multibyte string and copy it to the person struct
-			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_NAME_2, sCardRecvBuffer, &sCardRecvBytes);
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, 15);
-
-			if (wmemcpy_s(person.firstName, 15, szFormatBuffer, 15) != 0) {
-				OutputDebugString(L"Failed to copy received first name over to person object.\n");
-			}
-
-			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
-				OutputDebugString(L"Card was removed - waiting for new card...\n");
-				readerState = WAITING_FOR_CARD;
-				continue;
-			}
-
-
-
-			// 3. Read gender, convert it to multibyte string and copy it to the person struct
-			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_GENDER, sCardRecvBuffer, &sCardRecvBytes);
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, 1);
-
-			if (wmemcpy_s(person.firstName, 1, szFormatBuffer, 1) != 0) {
-				OutputDebugString(L"Failed to copy received gender over to person object.\n");
-			}
-
-			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
-				OutputDebugString(L"Card was removed - waiting for new card...\n");
-				readerState = WAITING_FOR_CARD;
-				continue;
-			}
-			
-			
-			// 4. Read ID number, convert it to multibyte string and copy it to the person struct
+			// 1. Read ID number, convert it to multibyte string and copy it to the person struct
 			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_IDNUMBER, sCardRecvBuffer, &sCardRecvBytes);
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, 9);
+			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, EID_LEN_IDNUMBER);
 
-			if (wmemcpy_s(person.idNumber, 9, szFormatBuffer, 9) != 0) {
+			if (wmemcpy_s(person.idNumber, EID_LEN_IDNUMBER, szFormatBuffer, EID_LEN_IDNUMBER) != 0) {
 				OutputDebugString(L"Failed to copy received ID number over to person object.\n");
-			}
-
-			// 5. Read birth date, convert it to multibyte string and copy it to the person struct
-			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_BIRTH_DATE, sCardRecvBuffer, &sCardRecvBytes);
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, 10);
-
-			if (wmemcpy_s(person.firstName, 10, szFormatBuffer, 10) != 0) {
-				OutputDebugString(L"Failed to copy received birth date over to person object.\n");
 			}
 
 			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
@@ -318,30 +269,67 @@ void sCardReaderThread(HWND hWnd) {
 			SCardDisconnect(sCardHandle, SCARD_UNPOWER_CARD);
 			setStatusString(hWnd, L"Done reading card.");
 
+			// TODO: handle errors.
+			currentTimet = time(0);
+			localtime_s(&currentTime, &currentTimet);
+			wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
+
+			OutputDebugString(L"Time is:\n\t");
+			OutputDebugString(szFormatBuffer);
+
+			OutputDebugString(L"\nID code is:\n\t");
+			OutputDebugString(person.idNumber);
+			OutputDebugString(L"\n");
+
 			// Output person structure to file
-			StringCbPrintf(lineBuffer, LINE_BUFFER_SIZE, L"%s,%s,%s,%s,%s\r\n", person.firstName, person.lastName, person.gender, person.birthDate, person.idNumber);
-			WriteFile(outputFile, lineBuffer, wcslen(lineBuffer), &bytesWritten, NULL);
+			try {
+				outputFile << szFormatBuffer << L"," << person.idNumber << std::endl;
+				outputFile.flush();
 
-			// TODO: wait for card to change.
+				if (outputFile.fail()) {
+					OutputDebugString(L"Some I/O error on output file happened\n");
+				}
 
-			readerState = WAITING_FOR_CARD;
+				readerState = WAITING_FOR_CARD;
+			}
+			catch (const std::exception &e) {
+				OutputDebugString(L"IO error thrown:\n\t");
+				const char* errorMessage = e.what();
 
+				MultiByteToWideChar(CP_UTF8, 0, errorMessage, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
+				OutputDebugString(szFormatBuffer);
+				
+				StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nerrno: %d\n\t", errno);
+				OutputDebugString(szFormatBuffer);
+
+				strerror_s(cFormatBuffer, FORMAT_BUFFER_SIZE);
+				MultiByteToWideChar(CP_UTF8, 0, cFormatBuffer, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
+				
+				OutputDebugString(szFormatBuffer);
+				
+				DWORD errCode = GetLastError();
+				StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nGetLastError(): %d\n\t", errCode);
+				OutputDebugString(szFormatBuffer);
+
+				goto teardown;
+			}
 		}
 #pragma endregion
+		if (shouldClose) {
+			break;
+		}
 		Sleep(SLEEP_TIME);
 	}
 teardown:
+	outputFile.close();
 	OutputDebugString(L"ID card reading thread finished.");
 	return;
 }
 
 BOOL setStatusString(HWND hWnd, LPTSTR text) {
 	statusString = text;
-	if (!redrawingWindow) {
-		redrawingWindow = true;
-		RedrawWindow(hWnd, NULL, NULL, RDW_ERASENOW | RDW_INTERNALPAINT);
-	}
-	return redrawingWindow;
+	UpdateWindow(hWnd);
+	return true;
 }
 DWORD openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes) {
 	DWORD sCardErrorCode;
@@ -507,7 +495,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			GetClientRect(hWnd, &rect);
 			DrawText(hdc, statusString, -1, &rect, DT_CENTER | DT_VCENTER);
             EndPaint(hWnd, &ps);
-			redrawingWindow = false;
         }
         break;
     case WM_DESTROY:

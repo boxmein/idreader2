@@ -6,8 +6,6 @@
 #define SCARD_RECVSIZE 180
 
 #define FORMAT_BUFFER_SIZE 255
-#define LINE_BUFFER_SIZE 192
-
 #define SCARD_FATAL_ERROR(hWnd, code) if (code != SCARD_S_SUCCESS) { showSCardErrorMessage(hWnd, code); goto teardown; }
 
 #define SLEEP_TIME 1500
@@ -30,6 +28,13 @@
 #define EID_NOTES_2 0x0E
 #define EID_NOTES_3 0x0F
 #define EID_NOTES_4 0x10
+
+// Estonian ID card record lengths
+#define EID_LEN_LAST_NAME 28
+#define EID_LEN_NAME_1 15
+#define EID_LEN_NAME_2 15
+#define EID_LEN_GENDER 1
+#define EID_LEN_IDNUMBER 11
 
 // Forward declarations
 ATOM                registerWndCls(HINSTANCE hInstance);

@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <time.h>
 
 // Windows Smart Card support
 #include <winscard.h>
@@ -28,3 +29,4 @@
 #include <strsafe.h>
 
 #include <thread>
+#include <fstream>
