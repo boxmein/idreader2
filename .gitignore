@@ -1,0 +1,7 @@
+*.aps
+*.pdb
+*.filters
+*.user
+Debug
+
+data.log
