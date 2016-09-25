@@ -5,8 +5,25 @@
 #define MAX_LOADSTRING 100
 #define SCARD_RECVSIZE 180
 
+#define READER_NAME_BUFFER_SIZE 255
 #define FORMAT_BUFFER_SIZE 255
-#define SCARD_FATAL_ERROR(hWnd, code) if (code != SCARD_S_SUCCESS) { showSCardErrorMessage(hWnd, code); goto teardown; }
+
+#define SCARD_NONFATAL_ERROR   SCARD_W_REMOVED_CARD | SCARD_W_UNSUPPORTED_CARD | SCARD_E_NO_READERS_AVAILABLE | SCARD_E_PROTO_MISMATCH | SCARD_E_NO_SMARTCARD
+#define SCARD_FATAL_ERROR(hWnd, outputFile, code) \
+	if (code != SCARD_S_SUCCESS && !(code & (SCARD_NONFATAL_ERROR))) { \
+		showSCardErrorMessage(hWnd, outputFile, code); \
+		goto teardown; \
+	}
+
+#define SCARD_LOG_ERROR(code, message) \
+	if (code != SCARD_S_SUCCESS && !(code & (SCARD_NONFATAL_ERROR)) { \
+		OutputDebugString(message); \
+	}
+#define SCARD_LOG_ERROR_CODE(receivedCode, errorCode, message) \
+	if (receivedCode == errorCode) { \
+		OutputDebugString(message); \
+	}
+
 
 #define SLEEP_TIME 1500
 #define MAX_READERS 16
@@ -42,6 +59,6 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    showAboutDialog(HWND, UINT, WPARAM, LPARAM);
 DWORD				readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes);
 DWORD				openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes);
-void				showSCardErrorMessage(HWND hWnd, DWORD errorCode);
+void				showSCardErrorMessage(HWND hWnd, std::wofstream* outputLog, DWORD errorCode);
 void				sCardReaderThread(HWND hWnd);
 BOOL				setStatusString(HWND hWnd, LPTSTR text);
