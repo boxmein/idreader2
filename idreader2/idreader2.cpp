@@ -4,13 +4,15 @@
 #include "stdafx.h"
 #include "idreader2.h"
 
+#define READERTHREAD
+#define UITHREAD
 
-HINSTANCE hInst;
-WCHAR szTitle[MAX_LOADSTRING];
-WCHAR szWindowClass[MAX_LOADSTRING];
+UITHREAD HINSTANCE hInst;
+UITHREAD WCHAR szTitle[MAX_LOADSTRING];
+UITHREAD WCHAR szWindowClass[MAX_LOADSTRING];
 
-CHAR cFormatBuffer[FORMAT_BUFFER_SIZE];
-WCHAR szFormatBuffer[FORMAT_BUFFER_SIZE];
+READERTHREAD CHAR cFormatBuffer[FORMAT_BUFFER_SIZE];
+READERTHREAD WCHAR szFormatBuffer[FORMAT_BUFFER_SIZE];
 
 bool shouldClose = false;
 
@@ -47,17 +49,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_ int       nCmdShow)
 {
 	MSG msg;
-	HWND hWnd;
 
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_IDREADER2, szWindowClass, MAX_LOADSTRING);
 
     registerWndCls(hInstance);
+	HWND hWnd;
 
 	hInst = hInstance;
 	hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
+	
 	if (!hWnd)
 	{
 		return EXIT_FAILURE;
@@ -67,13 +70,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UpdateWindow(hWnd);
 
 	std::thread sCardThread(sCardReaderThread, hWnd);
+
     while (GetMessage(&msg, nullptr, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
-	sCardThread.join();
 
 	OutputDebugString(L"UI thread finished.\n");
 
@@ -131,7 +133,6 @@ void sCardReaderThread(HWND hWnd) {
 	/// Reader states
 	std::wofstream outputLog;
 
-
 	// 0. open files for output
 	currentTimet = time(0);
 	localtime_s(&currentTime, &currentTimet);
@@ -161,7 +162,7 @@ void sCardReaderThread(HWND hWnd) {
 	outputLog << L"=== Alustan logimist: " << szFormatBuffer << L" ===" << std::endl;
 
 	// 1. establish a security context
-	sCardErrorCode = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &sCardContext);
+	sCardErrorCode = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &sCardContext);
 	SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
 
 	// Set to Notification to instantly receive notification when a card reader is inserted
@@ -181,10 +182,6 @@ void sCardReaderThread(HWND hWnd) {
 
 			sCardErrorCode = SCardGetStatusChange(sCardContext, INFINITE, &sCardReaderState, 1);
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
-
-			if (sCardReaderState.dwEventState & SCARD_STATE_CHANGED) {
-				OutputDebugString(L"Smart card reader state changed severely!\n");
-			}
 
 			if (sCardReaderState.dwEventState & SCARD_STATE_PRESENT) {
 				OutputDebugString(L"Smart card reader has a card!\n");
@@ -214,11 +211,12 @@ void sCardReaderThread(HWND hWnd) {
 			}
 		}
 		else if (readerState == TRYING_FOR_CARD) {
+			
 			setStatusString(hWnd, L"Ühendan kaardiga...");
 			OutputDebugString(L"Connecting to card...\n");
-			// gobble up all the card
-			sCardErrorCode = SCardConnect(sCardContext, sCardReaderState.szReader, SCARD_SHARE_EXCLUSIVE,
-				SCARD_PROTOCOL_T0, &sCardHandle, &sCardActiveProtocol);
+
+			sCardErrorCode = SCardConnect(sCardContext, sCardReaderState.szReader, SCARD_SHARE_SHARED,
+				SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &sCardHandle, &sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"SCardConnect: %x\n", (unsigned long)sCardErrorCode);
 			OutputDebugString(szFormatBuffer);
@@ -226,31 +224,35 @@ void sCardReaderThread(HWND hWnd) {
 			if (sCardErrorCode == SCARD_S_SUCCESS) {
 				readerState = READING_CARD;
 			}
-			else if (sCardErrorCode == SCARD_W_REMOVED_CARD) {
-				readerState = WAITING_FOR_READER;
-			}
 
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+			sCardHandleReaderErrors(sCardErrorCode, &readerState);
+			sCardHandleCardPull(sCardErrorCode, &readerState);
+
 		}
 		else if (readerState == READING_CARD) {
 
 			setStatusString(hWnd, L"Loen kaarti...");
-
-			sCardErrorCode = openSCardPersonalFile(sCardHandle, sCardRecvBuffer, &sCardRecvBytes);
+			sCardErrorCode = openSCardPersonalFile(sCardHandle, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"openSCardPersonalFile: %x\n", (unsigned long)sCardErrorCode);
 			OutputDebugString(szFormatBuffer);
 
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
-
-			// TODO: If card or reader pulled, go back to checking for either.
-			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_IDNUMBER, sCardRecvBuffer, &sCardRecvBytes);
+			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
+				sCardHandleCardPull(sCardErrorCode, &readerState)) {
+				continue;
+			}
+			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_IDNUMBER, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"readSCardPersonalFile: %x\n", (unsigned long)sCardErrorCode);
 			OutputDebugString(szFormatBuffer);
 
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
-			// TODO: if card or reader pulled
+			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
+				sCardHandleCardPull(sCardErrorCode, &readerState)) {
+				continue;
+			}
 
 			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, EID_LEN_IDNUMBER);
 			// TODO: handle conversion errors
@@ -355,19 +357,20 @@ BOOL setStatusString(HWND hWnd, LPTSTR text) {
 	UpdateWindow(hWnd);
 	return true;
 }
-DWORD openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes) {
+DWORD openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol) {
 	DWORD sCardErrorCode;
 
 	*receivedBytes = SCARD_RECVSIZE;
-	sCardErrorCode = SCardTransmit(sCardHandle, SCARD_PCI_T0, t0CmdChooseRootFolder,
+	sCardErrorCode = SCardTransmit(sCardHandle, sCardActiveProtocol == SCARD_PROTOCOL_T0 ? SCARD_PCI_T0 : SCARD_PCI_T1, t0CmdChooseRootFolder,
 		sizeof(t0CmdChooseRootFolder), NULL, receiveBuffer, receivedBytes);
 
 	if (sCardErrorCode != SCARD_S_SUCCESS) {
 		return sCardErrorCode;
 	}
+	
 
 	*receivedBytes = SCARD_RECVSIZE;
-	sCardErrorCode = SCardTransmit(sCardHandle, SCARD_PCI_T0, t0CmdChooseFolderEEEE,
+	sCardErrorCode = SCardTransmit(sCardHandle, sCardActiveProtocol == SCARD_PROTOCOL_T0 ? SCARD_PCI_T0 : SCARD_PCI_T1, t0CmdChooseFolderEEEE,
 		sizeof(t0CmdChooseFolderEEEE), NULL, receiveBuffer, receivedBytes);
 
 	if (sCardErrorCode != SCARD_S_SUCCESS) {
@@ -375,38 +378,54 @@ DWORD openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWO
 	}
 
 	*receivedBytes = SCARD_RECVSIZE;
-	sCardErrorCode = SCardTransmit(sCardHandle, SCARD_PCI_T0, t0CmdChooseFile5044,
+	sCardErrorCode = SCardTransmit(sCardHandle, sCardActiveProtocol == SCARD_PROTOCOL_T0 ? SCARD_PCI_T0 : SCARD_PCI_T1, t0CmdChooseFile5044,
 		sizeof(t0CmdChooseFile5044), NULL, receiveBuffer, receivedBytes);
 
 	return sCardErrorCode;
 }
-DWORD readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes) {
+DWORD readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol) {
 	DWORD errorValue = 0;
-	
-	BYTE readRecordCmd[4] = { 0 };
-	BYTE readBytesCmd[5] = { 0 };
 
+	BYTE *readRecordCmd;
+	BYTE *readBytesCmd;
+
+	if (sCardActiveProtocol == SCARD_PROTOCOL_T0) {
+		readRecordCmd = new byte[4] { 0 };
+		readBytesCmd = new byte[5] { 0 };
+	}
+	else {
+		readRecordCmd = new byte[5] { 0 };
+		readBytesCmd = new byte[6] { 0 };
+	}
+	
 	memcpy(readRecordCmd, t0CmdRequestRecord, 4);
 	memcpy(readBytesCmd, t0CmdReadBytes, 5);
 
 	readRecordCmd[2] = recordNumber;
 
 	*receivedBytes = SCARD_RECVSIZE;
-	errorValue = SCardTransmit(sCardHandle, SCARD_PCI_T0, readRecordCmd,
-		sizeof(readRecordCmd), NULL, receiveBuffer, receivedBytes);
+	errorValue = SCardTransmit(sCardHandle, 
+		sCardActiveProtocol == SCARD_PROTOCOL_T0 ? SCARD_PCI_T0 : SCARD_PCI_T1, 
+		readRecordCmd,
+		sCardActiveProtocol == SCARD_PROTOCOL_T0 ? 4 : 5, 
+		NULL, 
+		receiveBuffer, 
+		receivedBytes);
 
 	if (errorValue != SCARD_S_SUCCESS) {
 		return errorValue;
 	}
 
-	_ASSERT(*receivedBytes == 2);
-	
-	readBytesCmd[4] = receiveBuffer[1];
-	*receivedBytes = SCARD_RECVSIZE;
+	// T0 needs an extra step where we read the data previously requested
+	if (sCardActiveProtocol == SCARD_PROTOCOL_T0) {
+		readBytesCmd[4] = receiveBuffer[1];
+		*receivedBytes = SCARD_RECVSIZE;
 
-	errorValue = SCardTransmit(sCardHandle, SCARD_PCI_T0, readBytesCmd,
-		sizeof(readBytesCmd), NULL, receiveBuffer, receivedBytes);
-
+		errorValue = SCardTransmit(sCardHandle,
+			sCardActiveProtocol == SCARD_PROTOCOL_T0 ? SCARD_PCI_T0 : SCARD_PCI_T1,
+			readBytesCmd,
+			sCardActiveProtocol == SCARD_PROTOCOL_T0 ? 5 : 6, NULL, receiveBuffer, receivedBytes);
+	}
 	return errorValue;
 }
 void showSCardErrorMessage(HWND hWnd, std::wofstream *outputLog, DWORD errorCode) {
@@ -555,4 +574,21 @@ INT_PTR CALLBACK showAboutDialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         break;
     }
     return (INT_PTR)FALSE;
+}
+bool sCardHandleReaderErrors(DWORD errorCode, enum readerState *rs) {
+	if (errorCode == SCARD_E_READER_UNAVAILABLE || 
+		errorCode == SCARD_W_REMOVED_CARD || 
+		errorCode == SCARD_E_READER_UNSUPPORTED) {
+		*rs = WAITING_FOR_READER;
+		return true;
+	}
+	return false;
+}
+bool sCardHandleCardPull(DWORD errorCode, enum readerState *rs) {
+	if (errorCode == SCARD_W_REMOVED_CARD || 
+		errorCode == SCARD_E_NO_SMARTCARD) {
+		*rs = WAITING_FOR_READER;
+		return true;
+	}
+	return false;
 }

@@ -25,7 +25,7 @@
 	}
 
 
-#define SLEEP_TIME 1500
+#define SLEEP_TIME 100
 #define MAX_READERS 16
 
 // Estonian ID card record numbers
@@ -57,8 +57,10 @@
 ATOM                registerWndCls(HINSTANCE hInstance);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    showAboutDialog(HWND, UINT, WPARAM, LPARAM);
-DWORD				readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes);
-DWORD				openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes);
+DWORD				readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol);
+DWORD				openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol);
 void				showSCardErrorMessage(HWND hWnd, std::wofstream* outputLog, DWORD errorCode);
 void				sCardReaderThread(HWND hWnd);
 BOOL				setStatusString(HWND hWnd, LPTSTR text);
+bool				sCardHandleReaderErrors(DWORD sCardErrorCode, enum readerState *readerState);
+bool				sCardHandleCardPull(DWORD sCardErrorCode, enum readerState *readerState);
