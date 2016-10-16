@@ -73,6 +73,7 @@ namespace personali_raport
         public void SaveFile(string fileName)
         {
             worksheet.SaveAs(fileName);
+            excelApp.Quit();
         }
 
         /// <summary>

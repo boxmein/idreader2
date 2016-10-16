@@ -47,8 +47,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AttendanceReportWriter.cs" />
     <Compile Include="CardLogReader.cs" />
     <Compile Include="IReportWriter.cs" />
+    <Compile Include="MIDREPReportWriter.cs" />
     <Compile Include="PersonnelReader.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

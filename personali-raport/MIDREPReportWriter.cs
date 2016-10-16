@@ -34,7 +34,8 @@ namespace personali_raport
 
         public void SaveFile(string fileName)
         {
-            throw new NotImplementedException();
+            worksheet.SaveAs(fileName);
+            excelApp.Quit();
         }
 
         public void WriteReport(List<Person> personnel)

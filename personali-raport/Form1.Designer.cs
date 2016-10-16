@@ -269,6 +269,7 @@
             // reportOptionMidrep
             // 
             this.reportOptionMidrep.AutoSize = true;
+            this.reportOptionMidrep.Enabled = false;
             this.reportOptionMidrep.Location = new System.Drawing.Point(10, 50);
             this.reportOptionMidrep.Name = "reportOptionMidrep";
             this.reportOptionMidrep.Size = new System.Drawing.Size(67, 17);

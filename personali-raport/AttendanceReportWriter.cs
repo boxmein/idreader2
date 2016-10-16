@@ -10,6 +10,12 @@ namespace personali_raport
     class AttendanceReportWriter : IReportWriter
     {
 
+        const int START_ROW = 2;
+        const char START_COL = 'B';
+
+        const string FIRST_NAME = "Eesnimi";
+        const string LAST_NAME = "Perekonnanimi";
+        
         Worksheet worksheet;
         Workbook workbook;
         Application excelApp;
@@ -35,11 +41,17 @@ namespace personali_raport
         public void SaveFile(string fileName)
         {
             worksheet.SaveAs(fileName);
+            excelApp.Quit();
         }
 
         public void WriteReport(List<Person> personnel)
         {
-            throw new NotImplementedException();
+            
+            int currentRow = START_ROW;
+            foreach (var person in personnel)
+            {
+                SetValueToCell(currentRow, START_COL.ToString(), person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
+            }
         }
 
 
