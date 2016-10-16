@@ -8,7 +8,6 @@ namespace personali_raport
 {
     public class PersrepReportWriter : IReportWriter
     {
-        List<Person> personnel;
 
         Worksheet worksheet;
         Workbook workbook;
@@ -33,7 +32,8 @@ namespace personali_raport
         }
 
         /// <summary>
-        /// Create the PERSREP-style report.
+        /// Create the report.
+        /// Asks the user for the report template and fills it up according to which report type was specified.
         /// </summary>
         /// <param name="personnel">The people that this report will include.</param>
         public void WriteReport(List<Person> personnel)

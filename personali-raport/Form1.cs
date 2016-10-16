@@ -2,78 +2,84 @@
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.IO;
+using System.Linq;
 
 namespace personali_raport
 {
-    enum LoggerState { Initial, CollectingData };
-    enum ReporterState { OpenPersonnelList, SelectDataFile, SelectDateRange, OpenReportTemplate, LoadingData, SaveReport, Done };
+    enum LoggerState { Initial = 0, CollectingData = 1, Erroring = 2 };
+    enum ReporterState {
+            OpenPersonnelList = 0,
+            SelectDataFile = 1,
+            SelectDateRange = 2,
+            OpenReportTemplate = 3,
+            LoadingData = 4,
+            SaveReport = 5,
+            Done = 6
+    };
 
     public partial class Form1 : Form
     {
         ReportSettings settings;
         ReporterState reporterState = ReporterState.OpenPersonnelList;
 
+        LoggerState loggerState = LoggerState.Initial;
+
         IReportWriter reportWriter;
-        Panel[] reporterPanels = null;
+
+        Process loggerProcess;
         
         public Form1()
         {
             settings = new ReportSettings();
             InitializeComponent();
         }
-
-        public void UpdateReportMenu()
-        { 
-            /*
-            foreach (Panel r in reporterPanels)
-            {
-                r.Visible = false;
-            }
-
-            switch (reporterState)
-            {
-                case ReporterState.OpenPersonnelList:
-                    openPersonnelListPanel.Visible = true;
-                    break;
-                case ReporterState.SelectDataFile:
-                    openDataFilesPanel.Visible = true;
-                    break;
-
-                case ReporterState.SelectDateRange:
-                    selectDataPanel.Visible = true;
-                    break;
-
-                case ReporterState.LoadingData:
-                    generatingReportPanel.Visible = true;
-                    break;
-
-                case ReporterState.OpenReportTemplate:
-                    openReportTemplatePanel.Visible = true;
-                    break;
-
-                case ReporterState.SaveReport:
-                    saveReportPanel.Visible = true;
-                    break;
-
-                case ReporterState.Done:
-                    break;
-
-                default:
-                    break;
-            } 
-            */
-        }
-
+        
         private void Form1_Load(object sender, EventArgs e)
         {
-            reporterPanels = new Panel[] { openPersonnelListPanel, openDataFilesPanel,
-                selectDataPanel, generatingReportPanel, openReportTemplatePanel,
-                saveReportPanel };
+            // Initialize settings
+            settings.reportType = ReportType.PERSREP;
+            settings.personnelFileName = null;
+            settings.reportFileName = null;
+            settings.reportTemplate = null;
 
-            UpdateReportMenu();
+            startDataCollectionPanel.Visible = true;
+            dataCollectionProgressPanel.Visible = false;
 
-            settings.startOfReport = dataSelectionStartDate.Value;
-            settings.endOfReport = dataSelectionEndDate.Value;
+            // Initialize time filter settings
+            if (timeFilterEnabledCheckbox.Checked)
+            {
+                settings.startOfReport = dataSelectionStartDate.Value;
+                settings.endOfReport = dataSelectionEndDate.Value;
+            }
+            else {
+                settings.startOfReport = DateTime.MinValue;
+                settings.endOfReport = DateTime.MaxValue;
+            }
+
+
+            // Initialize subprocess for logger
+            loggerProcess = new Process();
+            loggerProcess.StartInfo.FileName = "idreader2.exe";
+            loggerProcess.StartInfo.CreateNoWindow = true;
+
+            loggerProcess.Exited += new EventHandler(this.onLoggerProcessExited);
+
+            Debug.Print("CWD is: " + Directory.GetCurrentDirectory());
+
+            // If we have actually got a logger program, we can allow user to control it
+            if (File.Exists("idreader2.exe"))
+            {
+                Debug.Print("Found idreader2.exe");
+                startDataCollectionBtn.Enabled = true;
+            }
+            else
+            {
+                Debug.Print("Missing CWD/idreader2.exe, cannot logger");
+                startDataCollectionBtn.Enabled = false;
+                loggerErrorLabel.Text = "Viga: puudub vajalik programm, et ID-kaardi andmeid koguda.";
+                loggerErrorLabel.Visible = true;
+            }
         }
 
         private void GenerateReport()
@@ -83,29 +89,29 @@ namespace personali_raport
             List<Person> logEntries = new List<Person>();
 
             int entriesNotRecognized = 0;
-            int entriesIterated = 0;
             
-
             foreach (IEnumerable<CardLogEntry> rows in cardLogReader.LoadAllFiles(settings.dataFiles))
             {
                 foreach (CardLogEntry row in rows)
                 {
-                    reportProgress.Value = entriesIterated * 100 / settings.dataFiles.Length;
 
                     if (row == null)
                     {
                         Debug.Print("Did not receive a valid row in GenerateReport() :(");
                         continue;
                     }
+                    
                     if (settings.startOfReport < row.datetime &&
                         settings.endOfReport > row.datetime)
                     {
-            
+                        Debug.Print("Processing person with ID code {0}", row.idCode);
+
                         // null if no person was found
                         Person foundPerson = personnelReader.ReadPersonalData(row.idCode);
 
                         if (foundPerson == null)
                         {
+                            Debug.Print("Can't recognize ID code {0}", row.idCode);
                             entriesNotRecognized++;
                             continue;
                         }
@@ -115,18 +121,32 @@ namespace personali_raport
                     }
                 }
             }
-        
-            // Count has capital C because he's important
-            Debug.Print("Found {0} entries (of which {1} were not translated to persons)", logEntries.Count, entriesNotRecognized);
 
+            progressStatusLabel.Text = String.Format("Edukalt loetud {0} kirjet.", logEntries.Count);
+            if (entriesNotRecognized > 0)
+            {
+                progressStatusLabel.Text += String.Format(" Ei suutnud tuvastada {0} kirjet.", entriesNotRecognized);
+            }
+            Debug.Print("Found {0} entries (and {1} were not translated to persons)", logEntries.Count, entriesNotRecognized);
+            
             if (settings.reportType == ReportType.PERSREP)
             {
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
-                reportWriter.WriteReport(logEntries);
+            } else if (settings.reportType == ReportType.ATTENDANCE)
+            {
+                reportWriter = new AttendanceReportWriter(settings.reportTemplate);
+                
+            } else if (settings.reportType == ReportType.MIDREP)
+            {
+                reportWriter = new MIDREPReportWriter(settings.reportTemplate);
             }
+
+            reportWriter.WriteReport(logEntries);
+
+            saveReportButton.Enabled = true;
         }
 
-        private void openPersonnelListBtn_Click(object sender, EventArgs e)
+        private void openPersonnelFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
             ofd.Filter = "Excel spreadsheets|*.xlsx";
@@ -134,11 +154,18 @@ namespace personali_raport
             if (dr == DialogResult.OK)
             {
                 settings.personnelFileName = ofd.FileName;
-                // forwardButton.Enabled = true;
+
+                openPersonnelFileBtn.Visible = false;
+                clearPersonnelFilesBtn.Visible = true;
+                personnelFileLabel.Visible = true;
+
+                personnelFileLabel.Text = Path.GetFileName(ofd.FileName);
+
+                UpdateValidity();
             }
         }
 
-        private void openDataFilesBtn_Click(object sender, EventArgs e)
+        private void openDataFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
             ofd.Multiselect = true;
@@ -147,33 +174,15 @@ namespace personali_raport
             if (dr == DialogResult.OK)
             {
                 settings.dataFiles = ofd.FileNames;
-                numberFilesOpen.Text = "Valitud " + ofd.FileNames.Length + " fail" + (ofd.FileNames.Length > 1 ? "i" : "");
-                // forwardButton.Enabled = true;
+
+                openDataFileBtn.Visible = false;
+                clearDataFilesBtn.Visible = true;
+                dataFileLabel.Visible = true;
+
+                dataFileLabel.Text = "Valitud " + ofd.FileNames.Length + " fail" + (ofd.FileNames.Length > 1 ? "i" : "");
+
+                UpdateValidity();
             }
-        }
-
-        private void generatePersrepBtn_Click(object sender, EventArgs e)
-        {
-            settings.reportType = ReportType.PERSREP;
-            reporterState = ReporterState.LoadingData;
-            UpdateReportMenu();
-            GenerateReport();
-        }
-
-        private void generateMidrepBtn_Click(object sender, EventArgs e)
-        {
-            settings.reportType = ReportType.PERSREP;
-            reporterState = ReporterState.LoadingData;
-            UpdateReportMenu();
-            GenerateReport();
-        }
-
-        private void generateAttendanceBtn_Click(object sender, EventArgs e)
-        {
-            settings.reportType = ReportType.ATTENDANCE;
-            reporterState = ReporterState.LoadingData;
-            UpdateReportMenu();
-            GenerateReport();
         }
 
         private void dataSelectionStartDate_ValueChanged(object sender, EventArgs e)
@@ -186,29 +195,7 @@ namespace personali_raport
             settings.endOfReport = dataSelectionEndDate.Value;
         }
 
-        private void forwardButton_Click(object sender, EventArgs e)
-        {
-            switch (reporterState)
-            {
-                case ReporterState.OpenPersonnelList:
-                    reporterState = ReporterState.SelectDataFile;
-                    break;
-                case ReporterState.SelectDataFile:
-                    reporterState = ReporterState.SelectDateRange;
-                    break;
-                case ReporterState.SelectDateRange:
-                    reporterState = ReporterState.OpenReportTemplate;
-                    break;
-                // after report template has been picked, start creating data
-                case ReporterState.OpenReportTemplate:
-                    reporterState = ReporterState.LoadingData;
-                    break;
-            }
-            forwardButton.Enabled = false;
-            UpdateReportMenu();
-        }
-
-        private void openPersrepFileBtn_Click(object sender, EventArgs e)
+        private void generatePersrepBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
             ofd.Filter = "Excel spreadsheets|*.xlsx";
@@ -216,8 +203,8 @@ namespace personali_raport
             if (dr == DialogResult.OK)
             {
                 settings.reportTemplate = ofd.FileName;
-                // forwardButton.Enabled = true;
-            } 
+                GenerateReport();
+            }
         }
 
         private void saveReportButton_Click(object sender, EventArgs e)
@@ -231,8 +218,144 @@ namespace personali_raport
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
+                progressStatusLabel.Text = "Salvestan...";
                 reportWriter.SaveFile(sfd.FileName);
+                progressStatusLabel.Text = "Raport on salvestatud! Vali veel andmeid või teist tüüpi mall.";
             }
         }
+        
+        private void onLoggerProcessExited(object sender, EventArgs args)
+        {
+            MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            loggerState = LoggerState.Initial;
+        }
+
+        private void startDataCollectionBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                loggerProcess.Start();
+                loggerState = LoggerState.CollectingData;
+                dataCollectionProgressPanel.Visible = true;
+                startDataCollectionPanel.Visible = false;
+            } catch (InvalidOperationException ex)
+            {
+                Debug.Print("loggerProcess.Start() threw InvalidOperationException");
+                Debug.Write(ex);
+                loggerErrorLabel.Text = "Viga ID-kaardi lugeja käitamisel";
+                startDataCollectionBtn.Enabled = false;
+            }
+        }
+
+        private void stopDataCollectionBtn_Click(object sender, EventArgs e)
+        {
+            try {
+                loggerProcess.Kill();
+            } catch (InvalidOperationException)
+            {
+                Debug.Print("logger process was already killed");
+            }
+            loggerState = LoggerState.Initial;
+
+            dataCollectionProgressPanel.Visible = false;
+            startDataCollectionPanel.Visible = true;
+        }
+
+        private void timeFilterEnabledCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            dataSelectionStartDate.Enabled = dataSelectionEndDate.Enabled = timeFilterEnabledCheckbox.Checked;
+
+            if (timeFilterEnabledCheckbox.Checked)
+            {
+                settings.startOfReport = dataSelectionStartDate.Value;
+                settings.endOfReport = dataSelectionEndDate.Value;
+            } else {
+                settings.startOfReport = DateTime.MinValue;
+                settings.endOfReport = DateTime.MaxValue;
+            }
+        }
+
+        private void reportOptionPersrep_CheckedChanged(object sender, EventArgs e)
+        {
+            if (reportOptionPersrep.Checked)
+            {
+                settings.reportType = ReportType.PERSREP;
+                Debug.Print("Report type is now PERSREP");
+            }
+        }
+
+        private void reportOptionMidrep_CheckedChanged(object sender, EventArgs e)
+        {
+            if (reportOptionMidrep.Checked)
+            {
+                settings.reportType = ReportType.MIDREP;
+                Debug.Print("Report type is now MIDREP");
+            }
+        }
+
+        private void reportOptionAttendance_CheckedChanged(object sender, EventArgs e)
+        {
+            if (reportOptionAttendance.Checked)
+            {
+                settings.reportType = ReportType.ATTENDANCE;
+                Debug.Print("Report type is now Attendance");
+            }
+        }
+
+        private void clearPersonnelFilesBtn_Click(object sender, EventArgs e)
+        {
+            personnelFileLabel.Visible = false;
+            clearPersonnelFilesBtn.Visible = false;
+            openPersonnelFileBtn.Visible = true;
+            UpdateValidity();
+        }
+
+        private void clearDataFilesBtn_Click(object sender, EventArgs e)
+        {
+            dataFileLabel.Visible = false;
+            clearDataFilesBtn.Visible = false;
+            openDataFileBtn.Visible = true;
+            UpdateValidity();
+        }
+
+        private void UpdateValidity()
+        {
+            if (settings.dataFiles != null && settings.dataFiles.Length > 0 &&
+                settings.dataFiles.All(dataFile => File.Exists(dataFile)) &&
+                settings.startOfReport != null &&
+                settings.endOfReport != null &&
+                settings.personnelFileName != null && File.Exists(settings.personnelFileName))
+            {
+                generatePersrepBtn.Enabled = true;
+            } else
+            {
+                generatePersrepBtn.Enabled = false;
+            }
+        }
+        
     }
 }
+
+/*
+Random cake
+            ,:/+/-
+            /M/              .,-=;//;-
+        .:/= ;MH/,    ,=/+%$XH@MM#@:
+        -$##@+$###@H@MMM#######H:.    -/H#
+    .,H@H@ X######@ -H#####@+-     -+H###@X
+    .,@##H;      +XM##M/,     =%@###@X;-
+X%-  :M##########$.    .:%M###@%:
+M##H,   +H@@@$/-.  ,;$M###@%,          -
+M####M=,,---,.-%%H####M$:          ,+@##
+@##################@/.         :%H##@$-
+M###############H,         ;HM##M$=
+#################.    .=$M##M$=
+################H..;XM##M$=          .:+
+M###################@%=           =+@MH%
+@#################M/.         =+H#X%=
+=+M###############M,      ,/X#H+:,
+    .;XM###########H=   ,/X#H+:;
+        .=+HM#######M+/+HM@+=.
+            ,:/%XM####H/.
+                ,.:=-.
+*/

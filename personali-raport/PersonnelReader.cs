@@ -32,6 +32,14 @@ namespace personali_raport
         Workbook workbook;
         Application excelApp;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="personnelReport">the file name for the isikutabel</param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the Excel workbook failed to open for some reason. Most likely,
+        /// the file doesn't exist.
+        /// </exception>
         public PersonnelReader(string personnelReport)
         {
             excelApp = new Application();
@@ -41,11 +49,18 @@ namespace personali_raport
             excelApp.UserControl = true;
             */
 
-            workbook = excelApp.Workbooks.Open(personnelReport);
-            worksheet = excelApp.ActiveSheet;
+            try
+            {
+                workbook = excelApp.Workbooks.Open(personnelReport);
+                worksheet = excelApp.ActiveSheet;
 
-            personProperties = new Dictionary<string, char>();
-            FindPersonProperties(FIRST_PERSONAL_COLUMN, MAX_PERSONAL_DATA);
+                personProperties = new Dictionary<string, char>();
+                FindPersonProperties(FIRST_PERSONAL_COLUMN, MAX_PERSONAL_DATA);
+            } catch (Exception)
+            {
+                Debug.Print("could not load personnel file");
+                throw new ArgumentException("personnel report could not be loaded");
+            }
         }
 
         /* 
