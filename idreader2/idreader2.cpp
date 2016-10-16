@@ -13,6 +13,9 @@ UITHREAD WCHAR szWindowClass[MAX_LOADSTRING];
 
 READERTHREAD CHAR cFormatBuffer[FORMAT_BUFFER_SIZE];
 READERTHREAD WCHAR szFormatBuffer[FORMAT_BUFFER_SIZE];
+READERTHREAD uint64_t *idCodeBuffer;
+uint64_t idCodeBufferSize = 500;
+uint64_t lastIdCodeIndex = 0;
 
 bool shouldClose = false;
 
@@ -58,7 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	hInst = hInstance;
 	hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, 0, 252, 188, nullptr, nullptr, hInstance, nullptr);
 
 	
 	if (!hWnd)
@@ -90,6 +93,8 @@ void sCardReaderThread(HWND hWnd) {
 	
 	ZeroMemory(&person, sizeof(struct person));
 	
+	idCodeBuffer = (uint64_t *) calloc(idCodeBufferSize, sizeof(uint64_t));
+
 	/// Any smart card related function will return an error code.
 	LONG sCardErrorCode;
 	
@@ -286,55 +291,73 @@ void sCardReaderThread(HWND hWnd) {
 			setStatusString(hWnd, L"Done reading card.");
 
 			// TODO: handle errors.
-			currentTimet = time(0);
-			localtime_s(&currentTime, &currentTimet);
-			wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
 
-			OutputDebugString(L"Time is:\n\t");
-			OutputDebugString(szFormatBuffer);
+			uint64_t idNumber = wcstol(person.idNumber, NULL, 10);
 
-			OutputDebugString(L"\nID code is:\n\t");
-			OutputDebugString(person.idNumber);
-			OutputDebugString(L"\n");
+			if (!hasIdCodeBeenScanned(idNumber)) {			
 
-			// Output person structure to file
-			try {
-				// "2016-05-12 14:45:50 +0400", 39610042010
-				outputFile << L'"' << szFormatBuffer << L"\"," << person.idNumber << std::endl;
-				outputFile.flush();
+				// Keep track that it has now been used
+				idCodeBuffer[lastIdCodeIndex] = idNumber;
+				lastIdCodeIndex++;
 
-				if (outputFile.fail()) {
-					OutputDebugString(L"Some I/O error on output file happened\n");
+				// double the buffer if it gets maxed
+				if (lastIdCodeIndex == idCodeBufferSize - 1) {
+					idCodeBuffer = (uint64_t *)realloc(idCodeBuffer, idCodeBufferSize * 2);
 				}
 
-				MessageBeep(0xFFFFFFFF);
+				currentTimet = time(0);
+				localtime_s(&currentTime, &currentTimet);
+				wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
 
-				// Wait for empty state
-				sCardErrorCode = SCardGetStatusChange(sCardContext, INFINITE, &sCardReaderState, 1);
-				SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+				OutputDebugString(L"Time is:\n\t");
+				OutputDebugString(szFormatBuffer);
 
-				readerState = WAITING_FOR_READER;
+				OutputDebugString(L"\nID code is:\n\t");
+				OutputDebugString(person.idNumber);
+				OutputDebugString(L"\n");
+
+				// Output person structure to file
+				try {
+					// "2016-05-12 14:45:50 +0400", 39610042010
+					outputFile << L'"' << szFormatBuffer << L"\"," << person.idNumber << std::endl;
+					outputFile.flush();
+
+					if (outputFile.fail()) {
+						OutputDebugString(L"Some I/O error on output file happened\n");
+					}
+
+					MessageBeep(0xFFFFFFFF);
+
+					// Wait for empty state
+					sCardErrorCode = SCardGetStatusChange(sCardContext, INFINITE, &sCardReaderState, 1);
+					SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+
+					readerState = WAITING_FOR_READER;
+				}
+				catch (const std::exception &e) {
+					OutputDebugString(L"IO error thrown:\n\t");
+					const char* errorMessage = e.what();
+
+					MultiByteToWideChar(CP_UTF8, 0, errorMessage, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
+					OutputDebugString(szFormatBuffer);
+
+					StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nerrno: %d\n\t", errno);
+					OutputDebugString(szFormatBuffer);
+
+					strerror_s(cFormatBuffer, FORMAT_BUFFER_SIZE);
+					MultiByteToWideChar(CP_UTF8, 0, cFormatBuffer, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
+
+					OutputDebugString(szFormatBuffer);
+
+					DWORD errCode = GetLastError();
+					StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nGetLastError(): %d\n\t", errCode);
+					OutputDebugString(szFormatBuffer);
+
+					goto teardown;
+				}
 			}
-			catch (const std::exception &e) {
-				OutputDebugString(L"IO error thrown:\n\t");
-				const char* errorMessage = e.what();
-
-				MultiByteToWideChar(CP_UTF8, 0, errorMessage, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
-				OutputDebugString(szFormatBuffer);
-				
-				StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nerrno: %d\n\t", errno);
-				OutputDebugString(szFormatBuffer);
-
-				strerror_s(cFormatBuffer, FORMAT_BUFFER_SIZE);
-				MultiByteToWideChar(CP_UTF8, 0, cFormatBuffer, strlen(errorMessage), szFormatBuffer, FORMAT_BUFFER_SIZE);
-				
-				OutputDebugString(szFormatBuffer);
-				
-				DWORD errCode = GetLastError();
-				StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"\nGetLastError(): %d\n\t", errCode);
-				OutputDebugString(szFormatBuffer);
-
-				goto teardown;
+			else {
+				OutputDebugString(L"Did not log card because have seen it before");
 			}
 		}
 		
@@ -345,6 +368,7 @@ void sCardReaderThread(HWND hWnd) {
 		Sleep(SLEEP_TIME);
 	}
 teardown:
+	free(idCodeBuffer);
 	outputFile.close();
 	outputLog.close();
 	OutputDebugString(L"ID card reading thread finished.");
@@ -589,6 +613,14 @@ bool sCardHandleCardPull(DWORD errorCode, enum readerState *rs) {
 		errorCode == SCARD_E_NO_SMARTCARD) {
 		*rs = WAITING_FOR_READER;
 		return true;
+	}
+	return false;
+}
+bool hasIdCodeBeenScanned(uint64_t idCode) {
+	for (int i = 0; i < lastIdCodeIndex; i++) {
+		if (idCodeBuffer[i] == idCode) {
+			return true;
+		}
 	}
 	return false;
 }

@@ -64,3 +64,4 @@ void				sCardReaderThread(HWND hWnd);
 BOOL				setStatusString(HWND hWnd, LPTSTR text);
 bool				sCardHandleReaderErrors(DWORD sCardErrorCode, enum readerState *readerState);
 bool				sCardHandleCardPull(DWORD sCardErrorCode, enum readerState *readerState);
+bool                hasIdCodeBeenScanned(uint64_t idCode);
