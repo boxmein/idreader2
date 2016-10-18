@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "idreader2.h"
+#include <limits.h>
 
 #define READERTHREAD
 #define UITHREAD
@@ -288,11 +289,11 @@ void sCardReaderThread(HWND hWnd) {
 		else if (readerState == WAITING_REMOVE) {
 			OutputDebugString(L"Done reading this card.\n");
 			SCardDisconnect(sCardHandle, SCARD_UNPOWER_CARD);
-			setStatusString(hWnd, L"Done reading card.");
+			setStatusString(hWnd, L"Kaart on juba loetud");
 
 			// TODO: handle errors.
 
-			uint64_t idNumber = wcstol(person.idNumber, NULL, 10);
+			uint64_t idNumber = wcstoll(person.idNumber, NULL, 10);
 
 			if (!hasIdCodeBeenScanned(idNumber)) {			
 
@@ -302,10 +303,15 @@ void sCardReaderThread(HWND hWnd) {
 
 				// double the buffer if it gets maxed
 				if (lastIdCodeIndex == idCodeBufferSize - 1) {
-					idCodeBuffer = (uint64_t *)realloc(idCodeBuffer, idCodeBufferSize * 2);
+					if (idCodeBufferSize * 2 > SIZE_MAX) {
+						OutputDebugString(L"idCodeBufferSize would be bigger than SIZE_MAX, cannot keep doubling");
+					}
+					else {
+						idCodeBuffer = (uint64_t *)realloc(idCodeBuffer, idCodeBufferSize * 2);
+					}
 				}
 
-				currentTimet = time(0);
+				currentTimet = time(NULL);
 				localtime_s(&currentTime, &currentTimet);
 				wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
 
@@ -327,12 +333,6 @@ void sCardReaderThread(HWND hWnd) {
 					}
 
 					MessageBeep(0xFFFFFFFF);
-
-					// Wait for empty state
-					sCardErrorCode = SCardGetStatusChange(sCardContext, INFINITE, &sCardReaderState, 1);
-					SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
-
-					readerState = WAITING_FOR_READER;
 				}
 				catch (const std::exception &e) {
 					OutputDebugString(L"IO error thrown:\n\t");
@@ -358,7 +358,14 @@ void sCardReaderThread(HWND hWnd) {
 			}
 			else {
 				OutputDebugString(L"Did not log card because have seen it before");
+				setStatusString(hWnd, L"Kaart on juba loetud");
 			}
+
+			// Wait for empty state
+			sCardErrorCode = SCardGetStatusChange(sCardContext, INFINITE, &sCardReaderState, 1);
+			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+
+			readerState = WAITING_FOR_READER;
 		}
 		
 #pragma endregion
