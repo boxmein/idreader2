@@ -130,7 +130,7 @@ namespace personali_raport
             // Walk over each personnel group and write data into their group cells
             int currentGroup = 0;
 
-            foreach (KeyValuePair<string, List<Person>> personnelGroup in personnelByGroup.OrderBy(x => x.Value[0].data["group"]))
+            foreach (KeyValuePair<string, List<Person>> personnelGroup in personnelByGroup.OrderBy(x => x.Value[0].data["group#"]))
             {
                 List<Person> personnelGrp = personnelGroup.Value;
 

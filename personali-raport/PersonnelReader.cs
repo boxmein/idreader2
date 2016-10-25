@@ -17,6 +17,9 @@ namespace personali_raport
         /// </summary>
         const char ID_CODE_COLUMN = 'N';
 
+        static readonly string GROUP_DATA_NAME = "group";
+        static readonly string GROUP_ROWNUM_DATA_NAME = "group#";
+
         const char FIRST_PERSONAL_COLUMN = 'A';
         const int MAX_PERSONAL_DATA = 20;
         /// <summary>
@@ -126,6 +129,33 @@ namespace personali_raport
         }
 
         /// <summary>
+        /// Given this person's table row, find which grouping they belong to according to the (blue, bold)
+        /// data tables.
+        /// People are grouped under blue "grouping" rows in the personnel file, so we can look up the 
+        /// first grouping row we can find above the person's record. Use this result for that:
+        /// <see cref="FindPersonRow"/>
+        /// </summary>
+        /// <param name="personRow">What row the person is on.</param>
+        /// <returns>The found group row, or -1 if not found.</returns>
+        public int FindPersonRowGroup(int personRow)
+        {
+            bool bold;
+
+            for (int i = personRow; i > 0; i--)
+            {
+                bold = worksheet.Cells[i, "A"].Font.Bold;
+                Debug.Print("A{0}: style is {1}", i, bold);
+
+                if (bold)
+                {
+                    Debug.Print("Found the person group: {0}", i);
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
         /// Get a value from the Excel spreadsheet.
         /// </summary>
         /// <param name="row">Row starting from 1</param>
@@ -174,12 +204,30 @@ namespace personali_raport
                 return null;
             }
 
+            // Collect person properties
             foreach (KeyValuePair<string, char> kvp in personProperties)
             {
                 person.data.Add(kvp.Key, GetValueFromCell(personRow, kvp.Value));
             }
+             
+            // Collect the person's group if possible
+            int group = FindPersonRowGroup(personRow);
+
+            if (group == -1)
+            {
+                Debug.Print("Could not figure out which group the person is in");
+            } else
+            {
+                person.data.Add("group", GetValueFromCell(group, "A"));
+                person.data.Add("group#", group.ToString());
+            }
 
             return person;
-        }      
+        }
+        
+        public void CloseExcel()
+        {
+            excelApp.Quit();
+        }
     }
 }
