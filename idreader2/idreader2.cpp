@@ -45,6 +45,8 @@ enum readerState { WAITING_FOR_READER, TRYING_FOR_CARD, READING_CARD, WAITING_RE
 /// This is the data we get to collect off the reader.
 struct person {
 	wchar_t idNumber[EID_LEN_IDNUMBER + 1];
+	wchar_t lastName[EID_LEN_LAST_NAME + 1];
+	wchar_t firstName[EID_LEN_NAME_1 + 1];
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -249,6 +251,11 @@ void sCardReaderThread(HWND hWnd) {
 				sCardHandleCardPull(sCardErrorCode, &readerState)) {
 				continue;
 			}
+
+			// 
+			// Read ID number
+			// 
+
 			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_IDNUMBER, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"readSCardPersonalFile: %x\n", (unsigned long)sCardErrorCode);
@@ -264,6 +271,79 @@ void sCardReaderThread(HWND hWnd) {
 			// TODO: handle conversion errors
 
 			if (wmemcpy_s(person.idNumber, EID_LEN_IDNUMBER, szFormatBuffer, EID_LEN_IDNUMBER) != 0) {
+				OutputDebugString(L"Failed to copy received ID number over to person object.\n");
+				// TODO: handle - retry?
+			}
+
+			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
+				OutputDebugString(L"Card was removed - waiting for new card...\n");
+				readerState = TRYING_FOR_CARD;
+				continue;
+			}
+
+			//
+			// Read last name
+			// 
+
+			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_LAST_NAME, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
+
+			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"readSCardPersonalFile: %x\n", (unsigned long)sCardErrorCode);
+			OutputDebugString(szFormatBuffer);
+
+			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
+				sCardHandleCardPull(sCardErrorCode, &readerState)) {
+				continue;
+			}
+
+			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, EID_LEN_LAST_NAME);
+			// TODO: handle conversion errors
+
+			for (int i = 0; i < EID_LEN_LAST_NAME;i++) {
+				if (szFormatBuffer[i] == 65533) {
+					szFormatBuffer[i] = 0;
+					break;
+				}
+			}
+
+			if (wmemcpy_s(person.lastName, EID_LEN_LAST_NAME, szFormatBuffer, EID_LEN_LAST_NAME) != 0) {
+				OutputDebugString(L"Failed to copy received ID number over to person object.\n");
+				// TODO: handle - retry?
+			}
+
+			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
+				OutputDebugString(L"Card was removed - waiting for new card...\n");
+				readerState = TRYING_FOR_CARD;
+				continue;
+			}
+
+
+			//
+			// Read first name
+			//
+
+			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_NAME_1, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
+
+			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"readSCardPersonalFile: %x\n", (unsigned long)sCardErrorCode);
+			OutputDebugString(szFormatBuffer);
+
+			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
+			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
+				sCardHandleCardPull(sCardErrorCode, &readerState)) {
+				continue;
+			}
+
+			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)sCardRecvBuffer, sCardRecvBytes, szFormatBuffer, EID_LEN_NAME_1);
+			// TODO: handle conversion errors
+
+			for (int i = 0; i < EID_LEN_LAST_NAME;i++) {
+				if (szFormatBuffer[i] == 65533) {
+					szFormatBuffer[i] = 0;
+					break;
+				}
+			}
+
+			if (wmemcpy_s(person.firstName, EID_LEN_NAME_1, szFormatBuffer, EID_LEN_NAME_1) != 0) {
 				OutputDebugString(L"Failed to copy received ID number over to person object.\n");
 				// TODO: handle - retry?
 			}
@@ -322,10 +402,18 @@ void sCardReaderThread(HWND hWnd) {
 				OutputDebugString(person.idNumber);
 				OutputDebugString(L"\n");
 
+				OutputDebugString(L"\nID code is:\n\t");
+				OutputDebugString(person.firstName);
+				OutputDebugString(L"\n");
+
+				OutputDebugString(L"\nID code is:\n\t");
+				OutputDebugString(person.lastName);
+				OutputDebugString(L"\n");
+
 				// Output person structure to file
 				try {
 					// "2016-05-12 14:45:50 +0400", 39610042010
-					outputFile << L'"' << szFormatBuffer << L"\"," << person.idNumber << std::endl;
+					outputFile << L'"' << szFormatBuffer << L"\"," << person.idNumber << L"," << person.firstName << L"," << person.lastName << std::endl;
 					outputFile.flush();
 
 					if (outputFile.fail()) {
