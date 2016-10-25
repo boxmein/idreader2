@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace personali_raport
 {
@@ -21,12 +22,7 @@ namespace personali_raport
     public partial class Form1 : Form
     {
         ReportSettings settings;
-        ReporterState reporterState = ReporterState.OpenPersonnelList;
-
-        LoggerState loggerState = LoggerState.Initial;
-
         IReportWriter reportWriter;
-
         Process loggerProcess;
         
         public Form1()
@@ -66,6 +62,8 @@ namespace personali_raport
             loggerProcess.Exited += new EventHandler(this.onLoggerProcessExited);
 
             Debug.Print("CWD is: " + Directory.GetCurrentDirectory());
+
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnExit);
 
             // If we have actually got a logger program, we can allow user to control it
             if (File.Exists("idreader2.exe"))
@@ -129,6 +127,12 @@ namespace personali_raport
             }
             Debug.Print("Found {0} entries (and {1} were not translated to persons)", logEntries.Count, entriesNotRecognized);
             
+            if (reportWriter != null)
+            {
+                reportWriter.CloseExcel();
+                reportWriter = null;
+            }
+
             if (settings.reportType == ReportType.PERSREP)
             {
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
@@ -136,10 +140,11 @@ namespace personali_raport
             {
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
                 
-            } else if (settings.reportType == ReportType.MIDREP)
-            {
-                reportWriter = new MIDREPReportWriter(settings.reportTemplate);
-            }
+            } 
+
+
+            personnelReader.CloseExcel();
+            personnelReader = null;
 
             reportWriter.WriteReport(logEntries);
 
@@ -185,6 +190,24 @@ namespace personali_raport
             }
         }
 
+        private void openReportFileBtn_Click(object sender, EventArgs e)
+        {
+            var ofd = new OpenFileDialog();
+            ofd.Filter = "Excel spreadsheets|*.xlsx";
+            var dr = ofd.ShowDialog();
+            if (dr == DialogResult.OK)
+            {
+                settings.reportTemplate = ofd.FileName;
+
+                openReportFileBtn.Visible = false;
+                clearReportFileBtn.Visible = true;
+                reportFileLabel.Visible = true;
+
+                reportFileLabel.Text = Path.GetFileName(ofd.FileName);
+                UpdateValidity();
+            }
+        }
+
         private void dataSelectionStartDate_ValueChanged(object sender, EventArgs e)
         {
             settings.startOfReport = dataSelectionStartDate.Value;
@@ -197,14 +220,7 @@ namespace personali_raport
 
         private void generatePersrepBtn_Click(object sender, EventArgs e)
         {
-            var ofd = new OpenFileDialog();
-            ofd.Filter = "Excel spreadsheets|*.xlsx";
-            var dr = ofd.ShowDialog();
-            if (dr == DialogResult.OK)
-            {
-                settings.reportTemplate = ofd.FileName;
-                GenerateReport();
-            }
+            GenerateReport();
         }
 
         private void saveReportButton_Click(object sender, EventArgs e)
@@ -284,15 +300,6 @@ namespace personali_raport
             }
         }
 
-        private void reportOptionMidrep_CheckedChanged(object sender, EventArgs e)
-        {
-            if (reportOptionMidrep.Checked)
-            {
-                settings.reportType = ReportType.MIDREP;
-                Debug.Print("Report type is now MIDREP");
-            }
-        }
-
         private void reportOptionAttendance_CheckedChanged(object sender, EventArgs e)
         {
             if (reportOptionAttendance.Checked)
@@ -324,7 +331,8 @@ namespace personali_raport
                 settings.dataFiles.All(dataFile => File.Exists(dataFile)) &&
                 settings.startOfReport != null &&
                 settings.endOfReport != null &&
-                settings.personnelFileName != null && File.Exists(settings.personnelFileName))
+                settings.personnelFileName != null && File.Exists(settings.personnelFileName) &&
+                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
             {
                 generatePersrepBtn.Enabled = true;
             } else
@@ -332,7 +340,14 @@ namespace personali_raport
                 generatePersrepBtn.Enabled = false;
             }
         }
-        
+
+        private void OnExit(object sender, EventArgs e)
+        {
+            if (reportWriter != null)
+            {
+                reportWriter.CloseExcel();
+            }
+        }
     }
 }
 
