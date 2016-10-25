@@ -46,7 +46,6 @@
             this.timeFilterGroupBox = new System.Windows.Forms.GroupBox();
             this.reportCreatorGroupBox = new System.Windows.Forms.GroupBox();
             this.reportOptionAttendance = new System.Windows.Forms.RadioButton();
-            this.reportOptionMidrep = new System.Windows.Forms.RadioButton();
             this.reportOptionPersrep = new System.Windows.Forms.RadioButton();
             this.dataSelectionGroupBox = new System.Windows.Forms.GroupBox();
             this.clearPersonnelFilesBtn = new System.Windows.Forms.Button();
@@ -58,6 +57,9 @@
             this.saveGroupBox = new System.Windows.Forms.GroupBox();
             this.progressStatusLabel = new System.Windows.Forms.Label();
             this.saveReportButton = new System.Windows.Forms.Button();
+            this.clearReportFileBtn = new System.Windows.Forms.Button();
+            this.reportFileLabel = new System.Windows.Forms.Label();
+            this.openReportFileBtn = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
@@ -180,9 +182,9 @@
             this.generatePersrepBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.generatePersrepBtn.Enabled = false;
-            this.generatePersrepBtn.Location = new System.Drawing.Point(175, 65);
+            this.generatePersrepBtn.Location = new System.Drawing.Point(179, 42);
             this.generatePersrepBtn.Name = "generatePersrepBtn";
-            this.generatePersrepBtn.Size = new System.Drawing.Size(80, 23);
+            this.generatePersrepBtn.Size = new System.Drawing.Size(80, 24);
             this.generatePersrepBtn.TabIndex = 8;
             this.generatePersrepBtn.Text = "Alusta >>>";
             this.generatePersrepBtn.UseVisualStyleBackColor = true;
@@ -235,7 +237,7 @@
             this.timeFilterGroupBox.Controls.Add(this.dataSelectionEndDate);
             this.timeFilterGroupBox.Controls.Add(this.label4);
             this.timeFilterGroupBox.Controls.Add(this.label3);
-            this.timeFilterGroupBox.Location = new System.Drawing.Point(12, 113);
+            this.timeFilterGroupBox.Location = new System.Drawing.Point(12, 150);
             this.timeFilterGroupBox.Name = "timeFilterGroupBox";
             this.timeFilterGroupBox.Size = new System.Drawing.Size(259, 116);
             this.timeFilterGroupBox.TabIndex = 5;
@@ -245,12 +247,11 @@
             // reportCreatorGroupBox
             // 
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionAttendance);
-            this.reportCreatorGroupBox.Controls.Add(this.reportOptionMidrep);
             this.reportCreatorGroupBox.Controls.Add(this.generatePersrepBtn);
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionPersrep);
-            this.reportCreatorGroupBox.Location = new System.Drawing.Point(8, 235);
+            this.reportCreatorGroupBox.Location = new System.Drawing.Point(11, 272);
             this.reportCreatorGroupBox.Name = "reportCreatorGroupBox";
-            this.reportCreatorGroupBox.Size = new System.Drawing.Size(265, 100);
+            this.reportCreatorGroupBox.Size = new System.Drawing.Size(265, 72);
             this.reportCreatorGroupBox.TabIndex = 6;
             this.reportCreatorGroupBox.TabStop = false;
             this.reportCreatorGroupBox.Text = "Rapordi liik";
@@ -258,7 +259,7 @@
             // reportOptionAttendance
             // 
             this.reportOptionAttendance.AutoSize = true;
-            this.reportOptionAttendance.Location = new System.Drawing.Point(10, 71);
+            this.reportOptionAttendance.Location = new System.Drawing.Point(10, 42);
             this.reportOptionAttendance.Name = "reportOptionAttendance";
             this.reportOptionAttendance.Size = new System.Drawing.Size(72, 17);
             this.reportOptionAttendance.TabIndex = 2;
@@ -266,23 +267,11 @@
             this.reportOptionAttendance.UseVisualStyleBackColor = true;
             this.reportOptionAttendance.CheckedChanged += new System.EventHandler(this.reportOptionAttendance_CheckedChanged);
             // 
-            // reportOptionMidrep
-            // 
-            this.reportOptionMidrep.AutoSize = true;
-            this.reportOptionMidrep.Enabled = false;
-            this.reportOptionMidrep.Location = new System.Drawing.Point(10, 50);
-            this.reportOptionMidrep.Name = "reportOptionMidrep";
-            this.reportOptionMidrep.Size = new System.Drawing.Size(67, 17);
-            this.reportOptionMidrep.TabIndex = 1;
-            this.reportOptionMidrep.Text = "MIDREP";
-            this.reportOptionMidrep.UseVisualStyleBackColor = true;
-            this.reportOptionMidrep.CheckedChanged += new System.EventHandler(this.reportOptionMidrep_CheckedChanged);
-            // 
             // reportOptionPersrep
             // 
             this.reportOptionPersrep.AutoSize = true;
             this.reportOptionPersrep.Checked = true;
-            this.reportOptionPersrep.Location = new System.Drawing.Point(10, 28);
+            this.reportOptionPersrep.Location = new System.Drawing.Point(10, 19);
             this.reportOptionPersrep.Name = "reportOptionPersrep";
             this.reportOptionPersrep.Size = new System.Drawing.Size(76, 17);
             this.reportOptionPersrep.TabIndex = 0;
@@ -301,14 +290,14 @@
             this.dataSelectionGroupBox.Controls.Add(this.openDataFileBtn);
             this.dataSelectionGroupBox.Location = new System.Drawing.Point(12, 12);
             this.dataSelectionGroupBox.Name = "dataSelectionGroupBox";
-            this.dataSelectionGroupBox.Size = new System.Drawing.Size(259, 95);
+            this.dataSelectionGroupBox.Size = new System.Drawing.Size(259, 132);
             this.dataSelectionGroupBox.TabIndex = 7;
             this.dataSelectionGroupBox.TabStop = false;
             this.dataSelectionGroupBox.Text = "Üksuse tabel ja kogutud logid";
             // 
             // clearPersonnelFilesBtn
             // 
-            this.clearPersonnelFilesBtn.Location = new System.Drawing.Point(12, 23);
+            this.clearPersonnelFilesBtn.Location = new System.Drawing.Point(12, 29);
             this.clearPersonnelFilesBtn.Name = "clearPersonnelFilesBtn";
             this.clearPersonnelFilesBtn.Size = new System.Drawing.Size(26, 26);
             this.clearPersonnelFilesBtn.TabIndex = 5;
@@ -330,7 +319,7 @@
             // 
             // dataFileLabel
             // 
-            this.dataFileLabel.Location = new System.Drawing.Point(45, 67);
+            this.dataFileLabel.Location = new System.Drawing.Point(38, 67);
             this.dataFileLabel.Name = "dataFileLabel";
             this.dataFileLabel.Size = new System.Drawing.Size(208, 20);
             this.dataFileLabel.TabIndex = 3;
@@ -339,7 +328,7 @@
             // 
             // personnelFileLabel
             // 
-            this.personnelFileLabel.Location = new System.Drawing.Point(45, 30);
+            this.personnelFileLabel.Location = new System.Drawing.Point(38, 34);
             this.personnelFileLabel.Name = "personnelFileLabel";
             this.personnelFileLabel.Size = new System.Drawing.Size(195, 19);
             this.personnelFileLabel.TabIndex = 2;
@@ -348,11 +337,11 @@
             // 
             // openPersonnelFileBtn
             // 
-            this.openPersonnelFileBtn.Location = new System.Drawing.Point(10, 23);
+            this.openPersonnelFileBtn.Location = new System.Drawing.Point(10, 27);
             this.openPersonnelFileBtn.Name = "openPersonnelFileBtn";
             this.openPersonnelFileBtn.Size = new System.Drawing.Size(121, 30);
             this.openPersonnelFileBtn.TabIndex = 6;
-            this.openPersonnelFileBtn.Text = "Ava personali tabel";
+            this.openPersonnelFileBtn.Text = "Ava üksuse tabel";
             this.openPersonnelFileBtn.UseVisualStyleBackColor = true;
             this.openPersonnelFileBtn.Click += new System.EventHandler(this.openPersonnelFileBtn_Click);
             // 
@@ -368,40 +357,72 @@
             // 
             // saveGroupBox
             // 
-            this.saveGroupBox.Controls.Add(this.progressStatusLabel);
             this.saveGroupBox.Controls.Add(this.saveReportButton);
-            this.saveGroupBox.Location = new System.Drawing.Point(7, 341);
+            this.saveGroupBox.Controls.Add(this.progressStatusLabel);
+            this.saveGroupBox.Location = new System.Drawing.Point(12, 350);
             this.saveGroupBox.Name = "saveGroupBox";
-            this.saveGroupBox.Size = new System.Drawing.Size(264, 85);
+            this.saveGroupBox.Size = new System.Drawing.Size(264, 63);
             this.saveGroupBox.TabIndex = 8;
             this.saveGroupBox.TabStop = false;
             this.saveGroupBox.Text = "Salvesta tulemused";
             // 
             // progressStatusLabel
             // 
-            this.progressStatusLabel.Location = new System.Drawing.Point(12, 21);
+            this.progressStatusLabel.Location = new System.Drawing.Point(7, 16);
             this.progressStatusLabel.Name = "progressStatusLabel";
-            this.progressStatusLabel.Size = new System.Drawing.Size(244, 15);
+            this.progressStatusLabel.Size = new System.Drawing.Size(167, 41);
             this.progressStatusLabel.TabIndex = 2;
             this.progressStatusLabel.Text = "Loeb logisid..";
             // 
             // saveReportButton
             // 
             this.saveReportButton.Enabled = false;
-            this.saveReportButton.Location = new System.Drawing.Point(176, 53);
+            this.saveReportButton.Location = new System.Drawing.Point(180, 32);
             this.saveReportButton.Name = "saveReportButton";
-            this.saveReportButton.Size = new System.Drawing.Size(80, 23);
+            this.saveReportButton.Size = new System.Drawing.Size(80, 25);
             this.saveReportButton.TabIndex = 0;
             this.saveReportButton.Text = "Salvesta";
             this.saveReportButton.UseVisualStyleBackColor = true;
             this.saveReportButton.Click += new System.EventHandler(this.saveReportButton_Click);
             // 
+            // clearReportFileBtn
+            // 
+            this.clearReportFileBtn.Location = new System.Drawing.Point(24, 105);
+            this.clearReportFileBtn.Name = "clearReportFileBtn";
+            this.clearReportFileBtn.Size = new System.Drawing.Size(26, 26);
+            this.clearReportFileBtn.TabIndex = 10;
+            this.clearReportFileBtn.Text = "X";
+            this.clearReportFileBtn.UseVisualStyleBackColor = true;
+            this.clearReportFileBtn.Visible = false;
+            // 
+            // reportFileLabel
+            // 
+            this.reportFileLabel.Location = new System.Drawing.Point(51, 108);
+            this.reportFileLabel.Name = "reportFileLabel";
+            this.reportFileLabel.Size = new System.Drawing.Size(125, 20);
+            this.reportFileLabel.TabIndex = 9;
+            this.reportFileLabel.Text = "reportFileLabel";
+            this.reportFileLabel.Visible = false;
+            // 
+            // openReportFileBtn
+            // 
+            this.openReportFileBtn.Location = new System.Drawing.Point(22, 103);
+            this.openReportFileBtn.Name = "openReportFileBtn";
+            this.openReportFileBtn.Size = new System.Drawing.Size(121, 30);
+            this.openReportFileBtn.TabIndex = 11;
+            this.openReportFileBtn.Text = "Vali dokumendi põhi";
+            this.openReportFileBtn.UseVisualStyleBackColor = true;
+            this.openReportFileBtn.Click += new System.EventHandler(this.openReportFileBtn_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 429);
+            this.ClientSize = new System.Drawing.Size(544, 423);
+            this.Controls.Add(this.clearReportFileBtn);
             this.Controls.Add(this.saveGroupBox);
+            this.Controls.Add(this.reportFileLabel);
+            this.Controls.Add(this.openReportFileBtn);
             this.Controls.Add(this.dataSelectionGroupBox);
             this.Controls.Add(this.reportCreatorGroupBox);
             this.Controls.Add(this.timeFilterGroupBox);
@@ -441,7 +462,6 @@
         private System.Windows.Forms.GroupBox timeFilterGroupBox;
         private System.Windows.Forms.GroupBox reportCreatorGroupBox;
         private System.Windows.Forms.RadioButton reportOptionAttendance;
-        private System.Windows.Forms.RadioButton reportOptionMidrep;
         private System.Windows.Forms.RadioButton reportOptionPersrep;
         private System.Windows.Forms.GroupBox dataSelectionGroupBox;
         private System.Windows.Forms.Label personnelFileLabel;
@@ -457,6 +477,9 @@
         private System.Windows.Forms.GroupBox saveGroupBox;
         private System.Windows.Forms.Button saveReportButton;
         private System.Windows.Forms.Label progressStatusLabel;
+        private System.Windows.Forms.Button clearReportFileBtn;
+        private System.Windows.Forms.Label reportFileLabel;
+        private System.Windows.Forms.Button openReportFileBtn;
     }
 }
 
