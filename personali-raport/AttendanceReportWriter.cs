@@ -11,7 +11,9 @@ namespace personali_raport
     {
 
         const int START_ROW = 2;
-        const char START_COL = 'B';
+
+        const string NAME_COL = "B";
+        const string RANK_COL = "C";
 
         const string FIRST_NAME = "Eesnimi";
         const string LAST_NAME = "Perekonnanimi";
@@ -38,20 +40,23 @@ namespace personali_raport
             worksheet = excelApp.ActiveSheet;
         }
 
-        public void SaveFile(string fileName)
+        public bool SaveFile(string fileName)
         {
             worksheet.SaveAs(fileName);
             excelApp.Quit();
+            return true;
         }
 
-        public void WriteReport(List<Person> personnel)
+        public bool WriteReport(List<Person> personnel)
         {
             
             int currentRow = START_ROW;
             foreach (var person in personnel)
             {
-                SetValueToCell(currentRow, START_COL.ToString(), person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
+                SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
+                SetValueToCell(currentRow, RANK_COL, person.data["group"]);
             }
+            return true;
         }
 
 
@@ -74,6 +79,11 @@ namespace personali_raport
                 throw new ArgumentNullException();
             }
             worksheet.Cells[row, column].FormulaLocal = value;
+        }
+
+        public void CloseExcel()
+        {
+            excelApp.Quit();
         }
     }
 }
