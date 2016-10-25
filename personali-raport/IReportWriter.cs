@@ -8,7 +8,9 @@ namespace personali_raport
 {
     interface IReportWriter
     {
-        void WriteReport(List<Person> personnel);
-        void SaveFile(string fileName);
+        bool WriteReport(List<Person> personnel);
+        bool SaveFile(string fileName);
+
+        void CloseExcel();
     }
 }
