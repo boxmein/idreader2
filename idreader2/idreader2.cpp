@@ -145,7 +145,7 @@ void sCardReaderThread() {
 	sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
 	sCardReaderState.pvUserData = nullptr;
 	sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
-	std::wcout << "0 Otsib kaardilugejaid..." << std::endl;
+	std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
 	// 2. start the process:
 	//    
 	//    - list readers
