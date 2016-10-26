@@ -27,7 +27,7 @@
     <ProductName>Raportite generaatori GUI</ProductName>
     <PublisherName>Johannes Kadak</PublisherName>
     <SuiteName>ID-kaardi koguja ja raportide generaator</SuiteName>
-    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationRevision>1</ApplicationRevision>
     <ApplicationVersion>1.3.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
