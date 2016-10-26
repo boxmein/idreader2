@@ -11,17 +11,17 @@
 #define SCARD_NONFATAL_ERROR   SCARD_W_REMOVED_CARD | SCARD_W_UNSUPPORTED_CARD | SCARD_E_NO_READERS_AVAILABLE | SCARD_E_PROTO_MISMATCH | SCARD_E_NO_SMARTCARD
 #define SCARD_FATAL_ERROR(hWnd, outputFile, code) \
 	if (code != SCARD_S_SUCCESS && !(code & (SCARD_NONFATAL_ERROR))) { \
-		showSCardErrorMessage(hWnd, outputFile, code); \
+		std::wcerr << code << " FATAL: Error reading ID card" << std::endl; \
 		goto teardown; \
 	}
 
 #define SCARD_LOG_ERROR(code, message) \
 	if (code != SCARD_S_SUCCESS && !(code & (SCARD_NONFATAL_ERROR)) { \
-		OutputDebugString(message); \
+		std::wcerr << code << " " << message << std::endl; \
 	}
 #define SCARD_LOG_ERROR_CODE(receivedCode, errorCode, message) \
 	if (receivedCode == errorCode) { \
-		OutputDebugString(message); \
+		std::wcerr << errorCode << " " << message << std::endl; \
 	}
 
 
@@ -54,14 +54,10 @@
 #define EID_LEN_IDNUMBER 11
 
 // Forward declarations
-ATOM                registerWndCls(HINSTANCE hInstance);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    showAboutDialog(HWND, UINT, WPARAM, LPARAM);
 DWORD				readSCardPersonalFile(SCARDHANDLE sCardHandle, BYTE recordNumber, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol);
 DWORD				openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol);
-void				showSCardErrorMessage(HWND hWnd, std::wofstream* outputLog, DWORD errorCode);
-void				sCardReaderThread(HWND hWnd);
-BOOL				setStatusString(HWND hWnd, LPTSTR text);
+void				showSCardErrorMessage(std::wofstream* outputLog, DWORD errorCode);
+void				sCardReaderThread();
 bool				sCardHandleReaderErrors(DWORD sCardErrorCode, enum readerState *readerState);
 bool				sCardHandleCardPull(DWORD sCardErrorCode, enum readerState *readerState);
 bool                hasIdCodeBeenScanned(uint64_t idCode);
