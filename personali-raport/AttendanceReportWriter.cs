@@ -55,6 +55,7 @@ namespace personali_raport
             {
                 SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
                 SetValueToCell(currentRow, RANK_COL, person.data["group"]);
+                currentRow += 1;
             }
             return true;
         }
