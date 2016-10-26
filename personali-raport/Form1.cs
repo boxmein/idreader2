@@ -22,6 +22,7 @@ namespace personali_raport
     public partial class Form1 : Form
     {
         ReportSettings settings;
+        LoggerState loggerState = LoggerState.Initial;
         IReportWriter reportWriter;
         Process loggerProcess;
         
