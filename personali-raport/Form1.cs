@@ -229,7 +229,16 @@ namespace personali_raport
             var sfd = new SaveFileDialog();
             sfd.AddExtension = true;
             sfd.CheckPathExists = true;
-            sfd.FileName = "raport-" + settings.startOfReport.ToString("dd.MM.yyyy-HH.mm.ss") + ".xlsx";
+
+            var datetime = settings.startOfReport;
+
+            // If time filtering is turned off, startOfReport is DateTime.MinValue
+            if (settings.startOfReport == DateTime.MinValue)
+            {
+                datetime = DateTime.Now;
+            }
+
+            sfd.FileName = "raport-" + datetime.ToString("dd.MM.yyyy-HH.mm.ss") + ".xlsx";
             sfd.Filter = "Excel spreadsheet|*.xlsx";
 
             if (sfd.ShowDialog() == DialogResult.OK)
