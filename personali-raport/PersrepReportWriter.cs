@@ -32,6 +32,20 @@ namespace personali_raport
         const string PERSREP_RANK_SUBOFFICER = "AO";
         const string PERSREP_RANK_PRIVATE = "S";
 
+        // Actual is (M84) 24R x 10C but keep space for title and remark
+        const int PERSREP_REMARKS_START_ROW = 86;
+        const int PERSREP_REMARKS_HEIGHT = 22;
+        const int PERSREP_REMARKS_WIDTH = 10;
+        const char PERSREP_REMARKS_START_COL = 'M';
+
+        // A: tegevväelased + personal - touchy
+        // B: ajateenijad    - no touchy
+        // C: reservväelased - no touchy
+        // D: KL tegevliikmed (mitte KVK) - no touchy
+        // E: Allies  - no touchy
+        // F: Summary - no touchy
+        // G: Märkmed: M84:V106 - touchy. Tundmatute kirjete maa
+
         Worksheet worksheet;
         Workbook workbook;
         Application excelApp;
@@ -114,14 +128,14 @@ namespace personali_raport
 
                 // copy the summary rows over
                 Range sumRows = worksheet.Range["A94", "J106"];
-                Range newRange = worksheet.Range["A" + (94 + extraGroups * PERSREP_GROUP_SIZE), "J" + (106 + extraGroups * PERSREP_GROUP_SIZE)];
+                Range newRange = worksheet.Range[('A' + (94 + extraGroups * PERSREP_GROUP_SIZE)).ToString(), ('J' + (106 + extraGroups * PERSREP_GROUP_SIZE)).ToString()];
                 sumRows.Copy(newRange);
 
                 Range donorRows = worksheet.Range["B10", "J15"];
 
                 for (int i = 0; i < extraGroups; i++)
                 {
-                    donorRows.Copy(worksheet.Range["A" + (94 + i * PERSREP_GROUP_SIZE), "J" + (94 + (i + 1) * PERSREP_GROUP_SIZE)]);
+                    donorRows.Copy(worksheet.Range[('A' + (94 + i * PERSREP_GROUP_SIZE)).ToString(),('J' + (94 + (i + 1) * PERSREP_GROUP_SIZE)).ToString()]);
                 }
             }
 
@@ -135,22 +149,22 @@ namespace personali_raport
                 List<Person> personnelGrp = personnelGroup.Value;
 
                 // Tabel A: Tegevväelased ja tsiviilpersonal
-                var ohvitserid = personnel.Where(person => {
+                var ohvitserid = personnelGrp.Where(person => {
                     return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
                            tempDataValue == PERSREP_RANK_OFFICER;
                 });
 
-                var allohvitserid = personnel.Where(person => {
+                var allohvitserid = personnelGrp.Where(person => {
                     return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
                            tempDataValue == PERSREP_RANK_SUBOFFICER;
                 });
 
-                var sodurid = personnel.Where(person => {
+                var sodurid = personnelGrp.Where(person => {
                     return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
                            tempDataValue == PERSREP_RANK_PRIVATE;
                 });
 
-                var tsiviilid = personnel.Where(person => {
+                var tsiviilid = personnelGrp.Where(person => {
                     return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
                            tempDataValue != PERSREP_RANK_OFFICER &&
                            tempDataValue != PERSREP_RANK_SUBOFFICER &&
@@ -169,6 +183,8 @@ namespace personali_raport
 
                 // Write group name
                 SetValueToCell(PERSREP_FIRST_GROUP_ROW + currentGroup * PERSREP_GROUP_SIZE, PERSREP_GROUP_COL, personnelGroup.Key);
+
+                // B: Ajateenijad - ei pea
 
                 currentGroup += 1;
             }
