@@ -206,7 +206,50 @@ namespace personali_raport
 
         public void CloseExcel()
         {
-            excelApp.Quit();
+            try
+            {
+                excelApp.Quit();
+            }
+            catch (Exception)
+            {
+                Debug.Print("Failed to close Excel app");
+            }
+
+        }
+
+        public bool HandleUnknownPeople(List<Person> unknownPeople)
+        {
+            if (unknownPeople.Count > 0)
+            {
+                SetValueToCell(85, "M", "Järgnevate inimeste isikukoode on nähtud, kuid puuduvad üksuse tabelist:");
+                int columnOffset = 0;
+                int rowOffset = 0;
+                bool outsideRemarksBox = false;
+
+                foreach (var person in unknownPeople)
+                {
+                    SetValueToCell(PERSREP_REMARKS_START_ROW + rowOffset, 
+                                  ((char) (PERSREP_REMARKS_START_COL + columnOffset)).ToString(), 
+                                  person.data["Eesnimi"] + " " + person.data["Perekonnanimi"] + "; " + person.idCode);
+
+                    rowOffset += 1;
+                    if (rowOffset > PERSREP_REMARKS_HEIGHT)
+                    {
+                        rowOffset = 0;
+                        columnOffset += 1;
+                    }
+                    if (columnOffset > PERSREP_REMARKS_WIDTH && !outsideRemarksBox)
+                    {
+                        if (MessageBox.Show("Liiga palju inimesi, keda pole tuvastatud. Ülejäänud kirjed jooksevad märkuste kastist välja.\r\n\r\nVajutage OK et jätkata ja Cancel et lõpetada.", "Viga tundmatute kirjete näitamisel raportis.", MessageBoxButtons.OKCancel) != DialogResult.OK) {
+                            break;
+                        }
+                        outsideRemarksBox = true;
+                    }
+                }
+
+                return true;
+            }
+            return false;
         }
     }
 }

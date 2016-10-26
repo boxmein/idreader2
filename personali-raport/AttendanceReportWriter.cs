@@ -85,5 +85,15 @@ namespace personali_raport
         {
             excelApp.Quit();
         }
+
+        /// <summary>
+        /// Doesn't handle unknown people.
+        /// </summary>
+        /// <param name="unknownPeople"></param>
+        /// <returns>true</returns>
+        public bool HandleUnknownPeople(List<Person> unknownPeople)
+        {
+            return true;
+        }
     }
 }

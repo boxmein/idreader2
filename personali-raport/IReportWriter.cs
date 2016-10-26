@@ -10,7 +10,7 @@ namespace personali_raport
     {
         bool WriteReport(List<Person> personnel);
         bool SaveFile(string fileName);
-
+        bool HandleUnknownPeople(List<Person> unknownPeople);
         void CloseExcel();
     }
 }

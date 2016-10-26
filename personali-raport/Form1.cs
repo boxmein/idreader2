@@ -86,6 +86,7 @@ namespace personali_raport
             PersonnelReader personnelReader = new PersonnelReader(settings.personnelFileName);
             CardLogReader cardLogReader = new CardLogReader();
             List<Person> logEntries = new List<Person>();
+            List<Person> unknownPeople = new List<Person>();
 
             int entriesNotRecognized = 0;
             
@@ -110,7 +111,13 @@ namespace personali_raport
 
                         if (foundPerson == null)
                         {
-                            Debug.Print("Can't recognize ID code {0}", row.idCode);
+                            Debug.Print("Unknown person, adding to unknown list", row.idCode);
+
+                            var p = new Person() { idCode = row.idCode };
+                            p.data["Eesnimi"] = row.firstName;
+                            p.data["Perekonnanimi"] = row.lastName;
+                            unknownPeople.Add(p);
+
                             entriesNotRecognized++;
                             continue;
                         }
@@ -148,6 +155,10 @@ namespace personali_raport
             personnelReader = null;
 
             reportWriter.WriteReport(logEntries);
+            if (unknownPeople.Count > 0)
+            {
+                reportWriter.HandleUnknownPeople(unknownPeople);
+            }
 
             saveReportButton.Enabled = true;
         }
