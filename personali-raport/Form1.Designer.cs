@@ -35,7 +35,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.dataCollectionProgressPanel = new System.Windows.Forms.Panel();
             this.stopDataCollectionBtn = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
+            this.loggerCountLabel = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.timeFilterEnabledCheckbox = new System.Windows.Forms.CheckBox();
             this.generatePersrepBtn = new System.Windows.Forms.Button();
@@ -55,11 +55,12 @@
             this.openPersonnelFileBtn = new System.Windows.Forms.Button();
             this.openDataFileBtn = new System.Windows.Forms.Button();
             this.saveGroupBox = new System.Windows.Forms.GroupBox();
-            this.progressStatusLabel = new System.Windows.Forms.Label();
             this.saveReportButton = new System.Windows.Forms.Button();
+            this.progressStatusLabel = new System.Windows.Forms.Label();
             this.clearReportFileBtn = new System.Windows.Forms.Button();
             this.reportFileLabel = new System.Windows.Forms.Label();
             this.openReportFileBtn = new System.Windows.Forms.Button();
+            this.loggerOutputLabel = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
@@ -72,7 +73,6 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.groupBox1.Controls.Add(this.startDataCollectionPanel);
             this.groupBox1.Controls.Add(this.dataCollectionProgressPanel);
             this.groupBox1.Location = new System.Drawing.Point(277, 12);
             this.groupBox1.Name = "groupBox1";
@@ -87,7 +87,7 @@
             this.startDataCollectionPanel.Controls.Add(this.startDataCollectionBtn);
             this.startDataCollectionPanel.Controls.Add(this.loggerErrorLabel);
             this.startDataCollectionPanel.Controls.Add(this.label6);
-            this.startDataCollectionPanel.Location = new System.Drawing.Point(6, 18);
+            this.startDataCollectionPanel.Location = new System.Drawing.Point(0, 0);
             this.startDataCollectionPanel.Name = "startDataCollectionPanel";
             this.startDataCollectionPanel.Size = new System.Drawing.Size(253, 108);
             this.startDataCollectionPanel.TabIndex = 8;
@@ -110,7 +110,7 @@
             this.loggerErrorLabel.ForeColor = System.Drawing.Color.Red;
             this.loggerErrorLabel.Location = new System.Drawing.Point(8, 23);
             this.loggerErrorLabel.Name = "loggerErrorLabel";
-            this.loggerErrorLabel.Size = new System.Drawing.Size(238, 41);
+            this.loggerErrorLabel.Size = new System.Drawing.Size(238, 16);
             this.loggerErrorLabel.TabIndex = 1;
             this.loggerErrorLabel.Text = "Viga: kogumisprogramm on puudu.";
             this.loggerErrorLabel.Visible = false;
@@ -127,8 +127,10 @@
             // dataCollectionProgressPanel
             // 
             this.dataCollectionProgressPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.dataCollectionProgressPanel.Controls.Add(this.startDataCollectionPanel);
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerOutputLabel);
             this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
-            this.dataCollectionProgressPanel.Controls.Add(this.label2);
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
             this.dataCollectionProgressPanel.Controls.Add(this.label1);
             this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
             this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
@@ -148,14 +150,14 @@
             this.stopDataCollectionBtn.UseVisualStyleBackColor = true;
             this.stopDataCollectionBtn.Click += new System.EventHandler(this.stopDataCollectionBtn_Click);
             // 
-            // label2
+            // loggerCountLabel
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(8, 23);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(48, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "0 inimest";
+            this.loggerCountLabel.AutoSize = true;
+            this.loggerCountLabel.Location = new System.Drawing.Point(8, 23);
+            this.loggerCountLabel.Name = "loggerCountLabel";
+            this.loggerCountLabel.Size = new System.Drawing.Size(48, 13);
+            this.loggerCountLabel.TabIndex = 1;
+            this.loggerCountLabel.Text = "0 inimest";
             // 
             // label1
             // 
@@ -366,14 +368,6 @@
             this.saveGroupBox.TabStop = false;
             this.saveGroupBox.Text = "Salvesta tulemused";
             // 
-            // progressStatusLabel
-            // 
-            this.progressStatusLabel.Location = new System.Drawing.Point(7, 16);
-            this.progressStatusLabel.Name = "progressStatusLabel";
-            this.progressStatusLabel.Size = new System.Drawing.Size(167, 41);
-            this.progressStatusLabel.TabIndex = 2;
-            this.progressStatusLabel.Text = "Loeb logisid..";
-            // 
             // saveReportButton
             // 
             this.saveReportButton.Enabled = false;
@@ -384,6 +378,14 @@
             this.saveReportButton.Text = "Salvesta";
             this.saveReportButton.UseVisualStyleBackColor = true;
             this.saveReportButton.Click += new System.EventHandler(this.saveReportButton_Click);
+            // 
+            // progressStatusLabel
+            // 
+            this.progressStatusLabel.Location = new System.Drawing.Point(7, 16);
+            this.progressStatusLabel.Name = "progressStatusLabel";
+            this.progressStatusLabel.Size = new System.Drawing.Size(167, 41);
+            this.progressStatusLabel.TabIndex = 2;
+            this.progressStatusLabel.Text = "Loeb logisid..";
             // 
             // clearReportFileBtn
             // 
@@ -413,6 +415,14 @@
             this.openReportFileBtn.Text = "Vali dokumendi põhi";
             this.openReportFileBtn.UseVisualStyleBackColor = true;
             this.openReportFileBtn.Click += new System.EventHandler(this.openReportFileBtn_Click);
+            // 
+            // loggerOutputLabel
+            // 
+            this.loggerOutputLabel.Location = new System.Drawing.Point(11, 42);
+            this.loggerOutputLabel.Name = "loggerOutputLabel";
+            this.loggerOutputLabel.Size = new System.Drawing.Size(235, 17);
+            this.loggerOutputLabel.TabIndex = 8;
+            this.loggerOutputLabel.Text = "loggerOutputLabel";
             // 
             // Form1
             // 
@@ -451,7 +461,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel dataCollectionProgressPanel;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label loggerCountLabel;
         private System.Windows.Forms.Button stopDataCollectionBtn;
         private System.Windows.Forms.DateTimePicker dataSelectionEndDate;
         private System.Windows.Forms.DateTimePicker dataSelectionStartDate;
@@ -480,6 +490,7 @@
         private System.Windows.Forms.Button clearReportFileBtn;
         private System.Windows.Forms.Label reportFileLabel;
         private System.Windows.Forms.Button openReportFileBtn;
+        private System.Windows.Forms.Label loggerOutputLabel;
     }
 }
 

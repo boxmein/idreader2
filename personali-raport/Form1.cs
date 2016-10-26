@@ -23,6 +23,8 @@ namespace personali_raport
     {
         ReportSettings settings;
         LoggerState loggerState = LoggerState.Initial;
+        int loggerScannedCount = 0;
+
         IReportWriter reportWriter;
         Process loggerProcess;
         
@@ -59,8 +61,16 @@ namespace personali_raport
             loggerProcess = new Process();
             loggerProcess.StartInfo.FileName = "idreader2.exe";
             loggerProcess.StartInfo.CreateNoWindow = true;
+            loggerProcess.StartInfo.UseShellExecute = false;
+            loggerProcess.StartInfo.RedirectStandardOutput = true;
+            loggerProcess.StartInfo.RedirectStandardError = true;
+
+            loggerProcess.OutputDataReceived += LoggerProcess_OutputDataReceived;
+            loggerProcess.ErrorDataReceived += LoggerProcess_ErrorDataReceived;
 
             loggerProcess.Exited += new EventHandler(this.onLoggerProcessExited);
+
+
 
             Debug.Print("CWD is: " + Directory.GetCurrentDirectory());
 
@@ -78,6 +88,115 @@ namespace personali_raport
                 startDataCollectionBtn.Enabled = false;
                 loggerErrorLabel.Text = "Viga: puudub vajalik programm, et ID-kaardi andmeid koguda.";
                 loggerErrorLabel.Visible = true;
+            }
+        }
+
+        #region Error Logger Related Stuff
+        private void LoggerProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            var lineSplit = e.Data.Split(' ');
+            int messageCode = 0;
+
+            int.TryParse(lineSplit[0], out messageCode);
+
+            this.Invoke((MethodInvoker) (() => loggerOutputLabel.Text = e.Data));
+            this.Invoke((MethodInvoker)(() => loggerOutputLabel.ForeColor = System.Drawing.Color.DarkRed));
+        }
+
+        private void LoggerProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            var lineSplit = e.Data.Split(' ');
+            int messageCode = 0;
+
+            int.TryParse(lineSplit[0], out messageCode);
+
+            loggerOutputLabel.ForeColor = System.Drawing.Color.Black;
+
+            switch (messageCode)
+            {
+                case 0: break; // Generic logs
+                case 2: // ID card data
+                    loggerScannedCount++;
+                    this.Invoke((MethodInvoker)(() => loggerCountLabel.Text = loggerScannedCount + " inimest"));
+                    break;
+                default: // 3 - "card has been scanned", among other things
+                    this.Invoke((MethodInvoker)(() => loggerOutputLabel.Text = e.Data));
+                    break;
+            }
+        }
+
+
+        private void onLoggerProcessExited(object sender, EventArgs args)
+        {
+            MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            loggerState = LoggerState.Initial;
+        }
+
+        private void startDataCollectionBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                loggerProcess.Start();
+
+                loggerProcess.BeginErrorReadLine();
+                loggerProcess.BeginOutputReadLine();
+
+                loggerState = LoggerState.CollectingData;
+                dataCollectionProgressPanel.Visible = true;
+                startDataCollectionPanel.Visible = false;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print("loggerProcess.Start() threw InvalidOperationException");
+                Debug.Write(ex);
+                loggerErrorLabel.Text = "Viga ID-kaardi lugeja käitamisel";
+                startDataCollectionBtn.Enabled = false;
+            }
+        }
+
+        private void stopDataCollectionBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                loggerProcess.CancelErrorRead();
+                loggerProcess.CancelOutputRead();
+                loggerProcess.Kill();
+            }
+            catch (InvalidOperationException)
+            {
+                Debug.Print("logger process was already killed");
+            }
+            loggerState = LoggerState.Initial;
+
+            dataCollectionProgressPanel.Visible = false;
+            startDataCollectionPanel.Visible = true;
+        }
+
+        #endregion
+
+
+        private void UpdateValidity()
+        {
+            if (settings.dataFiles != null && settings.dataFiles.Length > 0 &&
+                settings.dataFiles.All(dataFile => File.Exists(dataFile)) &&
+                settings.startOfReport != null &&
+                settings.endOfReport != null &&
+                settings.personnelFileName != null && File.Exists(settings.personnelFileName) &&
+                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
+            {
+                generatePersrepBtn.Enabled = true;
+            }
+            else
+            {
+                generatePersrepBtn.Enabled = false;
+            }
+        }
+
+        private void OnExit(object sender, EventArgs e)
+        {
+            if (reportWriter != null)
+            {
+                reportWriter.CloseExcel();
             }
         }
 
@@ -163,6 +282,7 @@ namespace personali_raport
             saveReportButton.Enabled = true;
         }
 
+        #region Form Event Handlers
         private void openPersonnelFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -181,7 +301,6 @@ namespace personali_raport
                 UpdateValidity();
             }
         }
-
         private void openDataFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -201,7 +320,6 @@ namespace personali_raport
                 UpdateValidity();
             }
         }
-
         private void openReportFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -219,22 +337,18 @@ namespace personali_raport
                 UpdateValidity();
             }
         }
-
         private void dataSelectionStartDate_ValueChanged(object sender, EventArgs e)
         {
             settings.startOfReport = dataSelectionStartDate.Value;
         }
-
         private void dataSelectionEndDate_ValueChanged(object sender, EventArgs e)
         {
             settings.endOfReport = dataSelectionEndDate.Value;
         }
-
         private void generatePersrepBtn_Click(object sender, EventArgs e)
         {
             GenerateReport();
         }
-
         private void saveReportButton_Click(object sender, EventArgs e)
         {
 
@@ -260,44 +374,6 @@ namespace personali_raport
                 progressStatusLabel.Text = "Raport on salvestatud! Vali veel andmeid või teist tüüpi mall.";
             }
         }
-        
-        private void onLoggerProcessExited(object sender, EventArgs args)
-        {
-            MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            loggerState = LoggerState.Initial;
-        }
-
-        private void startDataCollectionBtn_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                loggerProcess.Start();
-                loggerState = LoggerState.CollectingData;
-                dataCollectionProgressPanel.Visible = true;
-                startDataCollectionPanel.Visible = false;
-            } catch (InvalidOperationException ex)
-            {
-                Debug.Print("loggerProcess.Start() threw InvalidOperationException");
-                Debug.Write(ex);
-                loggerErrorLabel.Text = "Viga ID-kaardi lugeja käitamisel";
-                startDataCollectionBtn.Enabled = false;
-            }
-        }
-
-        private void stopDataCollectionBtn_Click(object sender, EventArgs e)
-        {
-            try {
-                loggerProcess.Kill();
-            } catch (InvalidOperationException)
-            {
-                Debug.Print("logger process was already killed");
-            }
-            loggerState = LoggerState.Initial;
-
-            dataCollectionProgressPanel.Visible = false;
-            startDataCollectionPanel.Visible = true;
-        }
-
         private void timeFilterEnabledCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             dataSelectionStartDate.Enabled = dataSelectionEndDate.Enabled = timeFilterEnabledCheckbox.Checked;
@@ -311,7 +387,6 @@ namespace personali_raport
                 settings.endOfReport = DateTime.MaxValue;
             }
         }
-
         private void reportOptionPersrep_CheckedChanged(object sender, EventArgs e)
         {
             if (reportOptionPersrep.Checked)
@@ -320,7 +395,6 @@ namespace personali_raport
                 Debug.Print("Report type is now PERSREP");
             }
         }
-
         private void reportOptionAttendance_CheckedChanged(object sender, EventArgs e)
         {
             if (reportOptionAttendance.Checked)
@@ -329,7 +403,6 @@ namespace personali_raport
                 Debug.Print("Report type is now Attendance");
             }
         }
-
         private void clearPersonnelFilesBtn_Click(object sender, EventArgs e)
         {
             personnelFileLabel.Visible = false;
@@ -337,7 +410,6 @@ namespace personali_raport
             openPersonnelFileBtn.Visible = true;
             UpdateValidity();
         }
-
         private void clearDataFilesBtn_Click(object sender, EventArgs e)
         {
             dataFileLabel.Visible = false;
@@ -345,30 +417,7 @@ namespace personali_raport
             openDataFileBtn.Visible = true;
             UpdateValidity();
         }
-
-        private void UpdateValidity()
-        {
-            if (settings.dataFiles != null && settings.dataFiles.Length > 0 &&
-                settings.dataFiles.All(dataFile => File.Exists(dataFile)) &&
-                settings.startOfReport != null &&
-                settings.endOfReport != null &&
-                settings.personnelFileName != null && File.Exists(settings.personnelFileName) &&
-                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
-            {
-                generatePersrepBtn.Enabled = true;
-            } else
-            {
-                generatePersrepBtn.Enabled = false;
-            }
-        }
-
-        private void OnExit(object sender, EventArgs e)
-        {
-            if (reportWriter != null)
-            {
-                reportWriter.CloseExcel();
-            }
-        }
+        #endregion
     }
 }
 
