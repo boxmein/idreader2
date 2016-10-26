@@ -10,6 +10,8 @@ namespace personali_raport
     {
         public DateTime datetime;
         public long idCode;
+        public string firstName;
+        public string lastName;
 
         public CardLogEntry()
         {
@@ -51,6 +53,13 @@ namespace personali_raport
                 Debug.Print("Failed to read ID code because it's not an integer");
                 Debug.Print("ID code value is: {0}", values[1]);
                 return null;
+            }
+
+            if (values.Length > 2)
+            {
+                entry.firstName = values[2];
+                entry.lastName  = values[3];
+                Debug.Print("Found first/last name too: {0} {1}", entry.firstName, entry.lastName);
             }
 
             return entry;
