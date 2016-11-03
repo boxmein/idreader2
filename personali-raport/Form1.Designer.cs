@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.dataCollectionProgressPanel = new System.Windows.Forms.Panel();
             this.startDataCollectionPanel = new System.Windows.Forms.Panel();
             this.startDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerErrorLabel = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.dataCollectionProgressPanel = new System.Windows.Forms.Panel();
+            this.loggerOutputLabel = new System.Windows.Forms.Label();
             this.stopDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerCountLabel = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
@@ -60,10 +61,9 @@
             this.clearReportFileBtn = new System.Windows.Forms.Button();
             this.reportFileLabel = new System.Windows.Forms.Label();
             this.openReportFileBtn = new System.Windows.Forms.Button();
-            this.loggerOutputLabel = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
-            this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
+            this.startDataCollectionPanel.SuspendLayout();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
             this.dataSelectionGroupBox.SuspendLayout();
@@ -73,6 +73,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.SystemColors.Control;
+            this.groupBox1.Controls.Add(this.startDataCollectionPanel);
             this.groupBox1.Controls.Add(this.dataCollectionProgressPanel);
             this.groupBox1.Location = new System.Drawing.Point(277, 12);
             this.groupBox1.Name = "groupBox1";
@@ -81,15 +82,28 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Andmete kogumine";
             // 
+            // dataCollectionProgressPanel
+            // 
+            this.dataCollectionProgressPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerOutputLabel);
+            this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
+            this.dataCollectionProgressPanel.Controls.Add(this.label1);
+            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
+            this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
+            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(253, 108);
+            this.dataCollectionProgressPanel.TabIndex = 4;
+            this.dataCollectionProgressPanel.Visible = false;
+            // 
             // startDataCollectionPanel
             // 
             this.startDataCollectionPanel.BackColor = System.Drawing.SystemColors.Control;
             this.startDataCollectionPanel.Controls.Add(this.startDataCollectionBtn);
             this.startDataCollectionPanel.Controls.Add(this.loggerErrorLabel);
             this.startDataCollectionPanel.Controls.Add(this.label6);
-            this.startDataCollectionPanel.Location = new System.Drawing.Point(0, 0);
+            this.startDataCollectionPanel.Location = new System.Drawing.Point(7, 20);
             this.startDataCollectionPanel.Name = "startDataCollectionPanel";
-            this.startDataCollectionPanel.Size = new System.Drawing.Size(253, 108);
+            this.startDataCollectionPanel.Size = new System.Drawing.Size(258, 108);
             this.startDataCollectionPanel.TabIndex = 8;
             // 
             // startDataCollectionBtn
@@ -99,7 +113,7 @@
             this.startDataCollectionBtn.Enabled = false;
             this.startDataCollectionBtn.Location = new System.Drawing.Point(9, 69);
             this.startDataCollectionBtn.Name = "startDataCollectionBtn";
-            this.startDataCollectionBtn.Size = new System.Drawing.Size(239, 34);
+            this.startDataCollectionBtn.Size = new System.Drawing.Size(244, 34);
             this.startDataCollectionBtn.TabIndex = 7;
             this.startDataCollectionBtn.Text = "Kogu ID-kaarte";
             this.startDataCollectionBtn.UseVisualStyleBackColor = true;
@@ -124,19 +138,13 @@
             this.label6.TabIndex = 0;
             this.label6.Text = "Alusta kogumist";
             // 
-            // dataCollectionProgressPanel
+            // loggerOutputLabel
             // 
-            this.dataCollectionProgressPanel.BackColor = System.Drawing.SystemColors.Control;
-            this.dataCollectionProgressPanel.Controls.Add(this.startDataCollectionPanel);
-            this.dataCollectionProgressPanel.Controls.Add(this.loggerOutputLabel);
-            this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
-            this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
-            this.dataCollectionProgressPanel.Controls.Add(this.label1);
-            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
-            this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
-            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(253, 108);
-            this.dataCollectionProgressPanel.TabIndex = 4;
-            this.dataCollectionProgressPanel.Visible = false;
+            this.loggerOutputLabel.Location = new System.Drawing.Point(11, 42);
+            this.loggerOutputLabel.Name = "loggerOutputLabel";
+            this.loggerOutputLabel.Size = new System.Drawing.Size(235, 17);
+            this.loggerOutputLabel.TabIndex = 8;
+            this.loggerOutputLabel.Text = "loggerOutputLabel";
             // 
             // stopDataCollectionBtn
             // 
@@ -416,14 +424,6 @@
             this.openReportFileBtn.UseVisualStyleBackColor = true;
             this.openReportFileBtn.Click += new System.EventHandler(this.openReportFileBtn_Click);
             // 
-            // loggerOutputLabel
-            // 
-            this.loggerOutputLabel.Location = new System.Drawing.Point(11, 42);
-            this.loggerOutputLabel.Name = "loggerOutputLabel";
-            this.loggerOutputLabel.Size = new System.Drawing.Size(235, 17);
-            this.loggerOutputLabel.TabIndex = 8;
-            this.loggerOutputLabel.Text = "loggerOutputLabel";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -443,10 +443,10 @@
             this.Text = "Personaliraport";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
-            this.startDataCollectionPanel.ResumeLayout(false);
-            this.startDataCollectionPanel.PerformLayout();
             this.dataCollectionProgressPanel.ResumeLayout(false);
             this.dataCollectionProgressPanel.PerformLayout();
+            this.startDataCollectionPanel.ResumeLayout(false);
+            this.startDataCollectionPanel.PerformLayout();
             this.timeFilterGroupBox.ResumeLayout(false);
             this.timeFilterGroupBox.PerformLayout();
             this.reportCreatorGroupBox.ResumeLayout(false);
