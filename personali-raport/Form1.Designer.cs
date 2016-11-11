@@ -29,11 +29,11 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.dataCollectionProgressPanel = new System.Windows.Forms.Panel();
             this.startDataCollectionPanel = new System.Windows.Forms.Panel();
             this.startDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerErrorLabel = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.dataCollectionProgressPanel = new System.Windows.Forms.Panel();
             this.loggerOutputLabel = new System.Windows.Forms.Label();
             this.stopDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerCountLabel = new System.Windows.Forms.Label();
@@ -61,13 +61,19 @@
             this.clearReportFileBtn = new System.Windows.Forms.Button();
             this.reportFileLabel = new System.Windows.Forms.Label();
             this.openReportFileBtn = new System.Windows.Forms.Button();
+            this.personMsgDisplay = new System.Windows.Forms.GroupBox();
+            this.personMsgLabel = new System.Windows.Forms.Label();
+            this.personNameLabel = new System.Windows.Forms.Label();
+            this.clearPersonMsgFile = new System.Windows.Forms.Button();
+            this.openPersonMsgFileBtn = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
-            this.dataCollectionProgressPanel.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
+            this.dataCollectionProgressPanel.SuspendLayout();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
             this.dataSelectionGroupBox.SuspendLayout();
             this.saveGroupBox.SuspendLayout();
+            this.personMsgDisplay.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -81,19 +87,6 @@
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Andmete kogumine";
-            // 
-            // dataCollectionProgressPanel
-            // 
-            this.dataCollectionProgressPanel.BackColor = System.Drawing.SystemColors.Control;
-            this.dataCollectionProgressPanel.Controls.Add(this.loggerOutputLabel);
-            this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
-            this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
-            this.dataCollectionProgressPanel.Controls.Add(this.label1);
-            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
-            this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
-            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(253, 108);
-            this.dataCollectionProgressPanel.TabIndex = 4;
-            this.dataCollectionProgressPanel.Visible = false;
             // 
             // startDataCollectionPanel
             // 
@@ -137,6 +130,19 @@
             this.label6.Size = new System.Drawing.Size(81, 13);
             this.label6.TabIndex = 0;
             this.label6.Text = "Alusta kogumist";
+            // 
+            // dataCollectionProgressPanel
+            // 
+            this.dataCollectionProgressPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerOutputLabel);
+            this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
+            this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
+            this.dataCollectionProgressPanel.Controls.Add(this.label1);
+            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
+            this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
+            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(253, 108);
+            this.dataCollectionProgressPanel.TabIndex = 4;
+            this.dataCollectionProgressPanel.Visible = false;
             // 
             // loggerOutputLabel
             // 
@@ -424,11 +430,66 @@
             this.openReportFileBtn.UseVisualStyleBackColor = true;
             this.openReportFileBtn.Click += new System.EventHandler(this.openReportFileBtn_Click);
             // 
+            // personMsgDisplay
+            // 
+            this.personMsgDisplay.Controls.Add(this.clearPersonMsgFile);
+            this.personMsgDisplay.Controls.Add(this.personNameLabel);
+            this.personMsgDisplay.Controls.Add(this.openPersonMsgFileBtn);
+            this.personMsgDisplay.Controls.Add(this.personMsgLabel);
+            this.personMsgDisplay.Location = new System.Drawing.Point(283, 156);
+            this.personMsgDisplay.Name = "personMsgDisplay";
+            this.personMsgDisplay.Size = new System.Drawing.Size(258, 257);
+            this.personMsgDisplay.TabIndex = 12;
+            this.personMsgDisplay.TabStop = false;
+            this.personMsgDisplay.Text = "Inimene";
+            // 
+            // personMsgLabel
+            // 
+            this.personMsgLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
+            this.personMsgLabel.ForeColor = System.Drawing.Color.Black;
+            this.personMsgLabel.Location = new System.Drawing.Point(17, 99);
+            this.personMsgLabel.Name = "personMsgLabel";
+            this.personMsgLabel.Size = new System.Drawing.Size(229, 138);
+            this.personMsgLabel.TabIndex = 1;
+            this.personMsgLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.personMsgLabel.Visible = false;
+            // 
+            // personNameLabel
+            // 
+            this.personNameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
+            this.personNameLabel.Location = new System.Drawing.Point(13, 24);
+            this.personNameLabel.Name = "personNameLabel";
+            this.personNameLabel.Size = new System.Drawing.Size(236, 63);
+            this.personNameLabel.TabIndex = 0;
+            this.personNameLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // clearPersonMsgFile
+            // 
+            this.clearPersonMsgFile.Location = new System.Drawing.Point(220, 99);
+            this.clearPersonMsgFile.Name = "clearPersonMsgFile";
+            this.clearPersonMsgFile.Size = new System.Drawing.Size(26, 26);
+            this.clearPersonMsgFile.TabIndex = 13;
+            this.clearPersonMsgFile.Text = "X";
+            this.clearPersonMsgFile.UseVisualStyleBackColor = true;
+            this.clearPersonMsgFile.Visible = false;
+            this.clearPersonMsgFile.Click += new System.EventHandler(this.clearPersonMsgFile_Click);
+            // 
+            // openPersonMsgFileBtn
+            // 
+            this.openPersonMsgFileBtn.Location = new System.Drawing.Point(81, 97);
+            this.openPersonMsgFileBtn.Name = "openPersonMsgFileBtn";
+            this.openPersonMsgFileBtn.Size = new System.Drawing.Size(168, 30);
+            this.openPersonMsgFileBtn.TabIndex = 8;
+            this.openPersonMsgFileBtn.Text = "Ava individuaalteate tabel";
+            this.openPersonMsgFileBtn.UseVisualStyleBackColor = true;
+            this.openPersonMsgFileBtn.Click += new System.EventHandler(this.openPersonMsgFileBtn_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(544, 423);
+            this.Controls.Add(this.personMsgDisplay);
             this.Controls.Add(this.clearReportFileBtn);
             this.Controls.Add(this.saveGroupBox);
             this.Controls.Add(this.reportFileLabel);
@@ -443,16 +504,17 @@
             this.Text = "Personaliraport";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
-            this.dataCollectionProgressPanel.ResumeLayout(false);
-            this.dataCollectionProgressPanel.PerformLayout();
             this.startDataCollectionPanel.ResumeLayout(false);
             this.startDataCollectionPanel.PerformLayout();
+            this.dataCollectionProgressPanel.ResumeLayout(false);
+            this.dataCollectionProgressPanel.PerformLayout();
             this.timeFilterGroupBox.ResumeLayout(false);
             this.timeFilterGroupBox.PerformLayout();
             this.reportCreatorGroupBox.ResumeLayout(false);
             this.reportCreatorGroupBox.PerformLayout();
             this.dataSelectionGroupBox.ResumeLayout(false);
             this.saveGroupBox.ResumeLayout(false);
+            this.personMsgDisplay.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -491,6 +553,11 @@
         private System.Windows.Forms.Label reportFileLabel;
         private System.Windows.Forms.Button openReportFileBtn;
         private System.Windows.Forms.Label loggerOutputLabel;
+        private System.Windows.Forms.GroupBox personMsgDisplay;
+        private System.Windows.Forms.Label personNameLabel;
+        private System.Windows.Forms.Label personMsgLabel;
+        private System.Windows.Forms.Button clearPersonMsgFile;
+        private System.Windows.Forms.Button openPersonMsgFileBtn;
     }
 }
 

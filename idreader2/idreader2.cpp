@@ -362,7 +362,7 @@ void sCardReaderThread() {
 				wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
 
 				// Let the GUI know we've read an ID card
-				std::wcout << "2 Time="     << szFormatBuffer
+				std::wcout << "2 Time=\""    << szFormatBuffer << "\""
 							<< " IDcode="    << person.idNumber 
 							<< " FirstName=" << person.firstName 
 							<< " LastName="  << person.lastName << std::endl;

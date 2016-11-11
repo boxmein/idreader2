@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Text.RegularExpressions;
 
 namespace personali_raport
 {
@@ -26,8 +27,14 @@ namespace personali_raport
         int loggerScannedCount = 0;
 
         IReportWriter reportWriter;
+        PersonMessageReader pmReader;
         Process loggerProcess;
-        
+
+        Regex firstNameRx = new Regex(@"FirstName=(\w+)");
+        Regex lastNameRx = new Regex(@"LastName=(\w+)");
+        Regex idCodeRx = new Regex(@"IDcode=(\d+)");
+
+
         public Form1()
         {
             settings = new ReportSettings();
@@ -94,6 +101,12 @@ namespace personali_raport
         #region Error Logger Related Stuff
         private void LoggerProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
+            if (e.Data == null)
+            {
+                Console.WriteLine("LoggerProcess_ErrorDataReceived: e.Data == null!");
+                return;
+            }
+
             var lineSplit = e.Data.Split(' ');
             int messageCode = 0;
 
@@ -105,7 +118,15 @@ namespace personali_raport
 
         private void LoggerProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            var lineSplit = e.Data.Split(' ');
+            Console.WriteLine(e.Data);
+
+            if (e.Data == null)
+            {
+                Console.WriteLine("LoggerProcess_OutputDataReceived: e.Data == null!");
+                return;
+            }
+
+            var lineSplit = e.Data.Split(new[] { ' ' }, 2);
             int messageCode = 0;
 
             int.TryParse(lineSplit[0], out messageCode);
@@ -116,12 +137,52 @@ namespace personali_raport
             {
                 case 0: break; // Generic logs
                 case 2: // ID card data
-                    loggerScannedCount++;
-                    this.Invoke((MethodInvoker)(() => loggerCountLabel.Text = loggerScannedCount + " inimest"));
+                    this.Invoke((MethodInvoker)(() => handleNewPerson(lineSplit[1])));
                     break;
                 default: // 3 - "card has been scanned", among other things
                     this.Invoke((MethodInvoker)(() => loggerOutputLabel.Text = e.Data));
                     break;
+            }
+        }
+
+        private void handleNewPerson(string personStructure)
+        {
+            string firstName = null, lastName = null, idCode;
+
+            loggerScannedCount++;
+            loggerCountLabel.Text = loggerScannedCount + " inimest";
+
+            var match = firstNameRx.Match(personStructure);
+            
+            if (match.Groups.Count == 2)
+            {
+                firstName = match.Groups[1].Value;
+            }
+
+            match = lastNameRx.Match(personStructure);
+
+            if (match.Groups.Count == 2)
+            {
+                lastName = match.Groups[1].Value;
+            }
+
+            if (firstName == null || lastName == null)
+            {
+                personNameLabel.Text = "";
+
+            }
+            else
+            {
+                personNameLabel.Text = firstName + " " + lastName;
+            }
+
+
+            match = idCodeRx.Match(personStructure);
+
+            if (pmReader != null && match.Groups.Count == 2)
+            {
+                idCode = match.Groups[1].Value;
+                personMsgLabel.Text = pmReader.GetPersonMessage(idCode);
             }
         }
 
@@ -416,6 +477,28 @@ namespace personali_raport
             clearDataFilesBtn.Visible = false;
             openDataFileBtn.Visible = true;
             UpdateValidity();
+        }
+        private void openPersonMsgFileBtn_Click(object sender, EventArgs e)
+        {
+            var ofd = new OpenFileDialog();
+            ofd.Filter = "Comma-separated values|*.csv";
+            var dr = ofd.ShowDialog();
+            if (dr == DialogResult.OK)
+            {
+                openPersonMsgFileBtn.Visible = false;
+                clearPersonMsgFile.Visible = true;
+                
+                personMsgLabel.Visible = true;
+
+                pmReader = new PersonMessageReader(ofd.FileName);
+            }
+        }
+        private void clearPersonMsgFile_Click(object sender, EventArgs e)
+        {
+            openPersonMsgFileBtn.Visible = true;
+            clearPersonMsgFile.Visible = false;
+            
+            personMsgLabel.Visible = false;
         }
         #endregion
     }
