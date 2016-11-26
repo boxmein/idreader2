@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace personali_raport
 {
@@ -33,6 +34,8 @@ namespace personali_raport
         Regex firstNameRx = new Regex(@"FirstName=(\w+)");
         Regex lastNameRx = new Regex(@"LastName=(\w+)");
         Regex idCodeRx = new Regex(@"IDcode=(\d+)");
+
+        IDCollectorForm idCollectorForm; 
 
 
         public Form1()
@@ -77,8 +80,6 @@ namespace personali_raport
 
             loggerProcess.Exited += new EventHandler(this.onLoggerProcessExited);
 
-
-
             Debug.Print("CWD is: " + Directory.GetCurrentDirectory());
 
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnExit);
@@ -111,9 +112,7 @@ namespace personali_raport
             int messageCode = 0;
 
             int.TryParse(lineSplit[0], out messageCode);
-
-            this.Invoke((MethodInvoker) (() => loggerOutputLabel.Text = e.Data));
-            this.Invoke((MethodInvoker)(() => loggerOutputLabel.ForeColor = System.Drawing.Color.DarkRed));
+            this.Invoke((MethodInvoker) (() => this.idCollectorForm.SetError(e.Data)));
         }
 
         private void LoggerProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -169,7 +168,6 @@ namespace personali_raport
             if (firstName == null || lastName == null)
             {
                 personNameLabel.Text = "";
-
             }
             else
             {
@@ -184,6 +182,8 @@ namespace personali_raport
                 idCode = match.Groups[1].Value;
                 personMsgLabel.Text = pmReader.GetPersonMessage(idCode);
             }
+
+            this.idCollectorForm?.ShowPerson(personNameLabel.Text, personMsgLabel.Text);
         }
 
 
@@ -198,6 +198,10 @@ namespace personali_raport
             try
             {
                 loggerProcess.Start();
+
+                idCollectorForm = new IDCollectorForm();
+                idCollectorForm.Show();
+                idCollectorForm.FormClosed += new FormClosedEventHandler(idCollectorForm_Closed);
 
                 loggerProcess.BeginErrorReadLine();
                 loggerProcess.BeginOutputReadLine();
@@ -215,7 +219,21 @@ namespace personali_raport
             }
         }
 
+        private void idCollectorForm_Closed(object sender, EventArgs e)
+        {
+            StopCollection();
+        }
+
         private void stopDataCollectionBtn_Click(object sender, EventArgs e)
+        {
+            if (idCollectorForm != null && idCollectorForm.Visible)
+            {
+                idCollectorForm.Close();
+            }
+            StopCollection();
+        }   
+
+        private void StopCollection()
         {
             try
             {
@@ -227,6 +245,7 @@ namespace personali_raport
             {
                 Debug.Print("logger process was already killed");
             }
+
             loggerState = LoggerState.Initial;
 
             dataCollectionProgressPanel.Visible = false;
@@ -489,6 +508,8 @@ namespace personali_raport
                 clearPersonMsgFile.Visible = true;
                 
                 personMsgLabel.Visible = true;
+                personalMsgFileLabel.Visible = true;
+                personalMsgFileLabel.Text = Path.GetFileName(ofd.FileName);
 
                 pmReader = new PersonMessageReader(ofd.FileName);
             }
@@ -497,7 +518,10 @@ namespace personali_raport
         {
             openPersonMsgFileBtn.Visible = true;
             clearPersonMsgFile.Visible = false;
-            
+
+            personalMsgFileLabel.Text = "";
+            personalMsgFileLabel.Visible = false;
+
             personMsgLabel.Visible = false;
         }
         #endregion

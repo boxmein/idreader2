@@ -27,11 +27,6 @@ namespace personali_raport
 
         const string PERSREP_UNGROUPED = "Liigitamata";
 
-        const string PERSREP_RANK_COL_TITLE = "KAT O/AO/S/-";
-        const string PERSREP_RANK_OFFICER = "O";
-        const string PERSREP_RANK_SUBOFFICER = "AO";
-        const string PERSREP_RANK_PRIVATE = "S";
-
         // Actual is (M84) 24R x 10C but keep space for title and remark
         const int PERSREP_REMARKS_START_ROW = 86;
         const int PERSREP_REMARKS_HEIGHT = 22;
@@ -150,25 +145,22 @@ namespace personali_raport
 
                 // Tabel A: Tegevväelased ja tsiviilpersonal
                 var ohvitserid = personnelGrp.Where(person => {
-                    return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
-                           tempDataValue == PERSREP_RANK_OFFICER;
+                    return person.data.TryGetValue("KKV OHV", out tempDataValue) && tempDataValue == "1";
                 });
 
                 var allohvitserid = personnelGrp.Where(person => {
-                    return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
-                           tempDataValue == PERSREP_RANK_SUBOFFICER;
+                    return person.data.TryGetValue("KKV ALLOHV", out tempDataValue) && tempDataValue == "1";
                 });
 
                 var sodurid = personnelGrp.Where(person => {
-                    return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
-                           tempDataValue == PERSREP_RANK_PRIVATE;
+                    return person.data.TryGetValue("KKV SÕDUR", out tempDataValue) && tempDataValue == "1";
                 });
 
                 var tsiviilid = personnelGrp.Where(person => {
-                    return person.data.TryGetValue(PERSREP_RANK_COL_TITLE, out tempDataValue) &&
-                           tempDataValue != PERSREP_RANK_OFFICER &&
-                           tempDataValue != PERSREP_RANK_SUBOFFICER &&
-                           tempDataValue != PERSREP_RANK_PRIVATE;
+                    return person.data.TryGetValue("RES OHV", out tempDataValue) && tempDataValue == "1" ||
+                           person.data.TryGetValue("RES ALLOHV", out tempDataValue) && tempDataValue == "1" ||
+                           person.data.TryGetValue("RES SÕDUR", out tempDataValue) && tempDataValue == "1" ||
+                           person.data.TryGetValue("mitte KVK", out tempDataValue) && tempDataValue == "1";
                 });
 
                 Debug.Print("grupp {4}: ohvitsere {0}, allohvitsere {1}, sõdureid {2}, tsiviile {3}",

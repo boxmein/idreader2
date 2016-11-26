@@ -87,6 +87,12 @@
   <ItemGroup>
     <Compile Include="AttendanceReportWriter.cs" />
     <Compile Include="CardLogReader.cs" />
+    <Compile Include="IDCollectorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="IDCollectorForm.Designer.cs">
+      <DependentUpon>IDCollectorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="IReportWriter.cs" />
     <Compile Include="PersonMessageReader.cs" />
     <Compile Include="PersonnelReader.cs" />
@@ -108,6 +114,9 @@
     </Compile>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="IDCollectorForm.resx">
+      <DependentUpon>IDCollectorForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
