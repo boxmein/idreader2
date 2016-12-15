@@ -22,20 +22,18 @@ namespace personali_raport
         Workbook workbook;
         Application excelApp;
 
+        int currentRow = 0;
+
         /// <summary>
         /// Instantiates a new PersrepReportWriter along with opening the report 
         /// template.
         /// </summary>
-        /// <param name="fileName">The Excel spreadsheet file name that the report will be based on.</param>
+        /// <param name="fileName">
+        /// The report template file. This is opened and saved-as a new report.
+        /// </param>
         public AttendanceReportWriter(string fileName)
         {
             excelApp = new Application();
-
-            /*
-            excelApp.Visible = true;
-            excelApp.UserControl = true;
-            */
-
             workbook = excelApp.Workbooks.Open(fileName);
             worksheet = excelApp.ActiveSheet;
         }
@@ -50,7 +48,7 @@ namespace personali_raport
         public bool WriteReport(List<Person> personnel)
         {
             
-            int currentRow = START_ROW;
+            currentRow = START_ROW;
             foreach (var person in personnel)
             {
                 SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
@@ -84,16 +82,30 @@ namespace personali_raport
 
         public void CloseExcel()
         {
-            excelApp.Quit();
+            try
+            {
+                excelApp.Quit();
+            }
+            catch (Exception)
+            {
+                Debug.Print("Failed to close Excel app");
+            }
         }
 
+
         /// <summary>
-        /// Doesn't handle unknown people.
+        /// Should add unknown people to the attendance report. Doesn't add them to the attendance report.
         /// </summary>
         /// <param name="unknownPeople"></param>
         /// <returns>true</returns>
         public bool HandleUnknownPeople(List<Person> unknownPeople)
         {
+            foreach (var person in unknownPeople)
+            {
+                SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
+                SetValueToCell(currentRow, RANK_COL, "Üksuse tabelis ei olnud: " + person.idCode);
+                currentRow += 1;
+            }
             return true;
         }
     }

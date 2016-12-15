@@ -62,14 +62,15 @@
             this.reportFileLabel = new System.Windows.Forms.Label();
             this.openReportFileBtn = new System.Windows.Forms.Button();
             this.personMsgDisplay = new System.Windows.Forms.GroupBox();
+            this.personalMsgFileLabel = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.clearPersonMsgFile = new System.Windows.Forms.Button();
             this.personNameLabel = new System.Windows.Forms.Label();
             this.openPersonMsgFileBtn = new System.Windows.Forms.Button();
             this.personMsgLabel = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.personalMsgFileLabel = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
@@ -414,6 +415,7 @@
             this.clearReportFileBtn.Text = "X";
             this.clearReportFileBtn.UseVisualStyleBackColor = true;
             this.clearReportFileBtn.Visible = false;
+            this.clearReportFileBtn.Click += new System.EventHandler(this.clearReportFileBtn_Click);
             // 
             // reportFileLabel
             // 
@@ -446,10 +448,46 @@
             this.personMsgDisplay.Controls.Add(this.personMsgLabel);
             this.personMsgDisplay.Location = new System.Drawing.Point(283, 156);
             this.personMsgDisplay.Name = "personMsgDisplay";
-            this.personMsgDisplay.Size = new System.Drawing.Size(258, 257);
+            this.personMsgDisplay.Size = new System.Drawing.Size(258, 198);
             this.personMsgDisplay.TabIndex = 12;
             this.personMsgDisplay.TabStop = false;
             this.personMsgDisplay.Text = "Inimene";
+            // 
+            // personalMsgFileLabel
+            // 
+            this.personalMsgFileLabel.Location = new System.Drawing.Point(75, 53);
+            this.personalMsgFileLabel.Name = "personalMsgFileLabel";
+            this.personalMsgFileLabel.Size = new System.Drawing.Size(146, 20);
+            this.personalMsgFileLabel.TabIndex = 17;
+            this.personalMsgFileLabel.Text = "personalMsgFileLabel";
+            this.personalMsgFileLabel.Visible = false;
+            // 
+            // label7
+            // 
+            this.label7.Location = new System.Drawing.Point(11, 87);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(58, 23);
+            this.label7.TabIndex = 16;
+            this.label7.Text = "Teade";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            // 
+            // label5
+            // 
+            this.label5.Location = new System.Drawing.Point(11, 53);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(58, 20);
+            this.label5.TabIndex = 15;
+            this.label5.Text = "Teatetabel";
+            this.label5.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(11, 27);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(58, 23);
+            this.label2.TabIndex = 14;
+            this.label2.Text = "Nimi";
+            this.label2.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // clearPersonMsgFile
             // 
@@ -487,51 +525,25 @@
             this.personMsgLabel.ForeColor = System.Drawing.Color.Black;
             this.personMsgLabel.Location = new System.Drawing.Point(71, 83);
             this.personMsgLabel.Name = "personMsgLabel";
-            this.personMsgLabel.Size = new System.Drawing.Size(178, 165);
+            this.personMsgLabel.Size = new System.Drawing.Size(178, 99);
             this.personMsgLabel.TabIndex = 1;
             this.personMsgLabel.Visible = false;
             // 
-            // label2
+            // label8
             // 
-            this.label2.Location = new System.Drawing.Point(11, 27);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(58, 23);
-            this.label2.TabIndex = 14;
-            this.label2.Text = "Nimi";
-            this.label2.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // label5
-            // 
-            this.label5.Location = new System.Drawing.Point(11, 53);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(58, 20);
-            this.label5.TabIndex = 15;
-            this.label5.Text = "Teatetabel";
-            this.label5.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // label7
-            // 
-            this.label7.Location = new System.Drawing.Point(11, 87);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(58, 23);
-            this.label7.TabIndex = 16;
-            this.label7.Text = "Teade";
-            this.label7.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // personalMsgFileLabel
-            // 
-            this.personalMsgFileLabel.Location = new System.Drawing.Point(75, 53);
-            this.personalMsgFileLabel.Name = "personalMsgFileLabel";
-            this.personalMsgFileLabel.Size = new System.Drawing.Size(146, 20);
-            this.personalMsgFileLabel.TabIndex = 17;
-            this.personalMsgFileLabel.Text = "personalMsgFileLabel";
-            this.personalMsgFileLabel.Visible = false;
+            this.label8.Location = new System.Drawing.Point(292, 361);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(244, 53);
+            this.label8.TabIndex = 13;
+            this.label8.Text = "Programm on koostatud Eesti Kaitseliidu Tartu maleva asutusesiseseks kasutamiseks" +
+    ".\r\nTugi: johannes.kadak+ekl@gmail.com\r\n";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(544, 423);
+            this.Controls.Add(this.label8);
             this.Controls.Add(this.personMsgDisplay);
             this.Controls.Add(this.clearReportFileBtn);
             this.Controls.Add(this.saveGroupBox);
@@ -541,10 +553,11 @@
             this.Controls.Add(this.reportCreatorGroupBox);
             this.Controls.Add(this.timeFilterGroupBox);
             this.Controls.Add(this.groupBox1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
-            this.Text = "Personaliraport";
+            this.Text = "ID-kaardi lugeja ja PERSREPi koostaja 1.7";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.startDataCollectionPanel.ResumeLayout(false);
@@ -605,6 +618,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label personalMsgFileLabel;
+        private System.Windows.Forms.Label label8;
     }
 }
 

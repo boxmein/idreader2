@@ -11,8 +11,17 @@ using DialogResult = System.Windows.Forms.DialogResult;
 
 namespace personali_raport
 {
+    
+    /// <summary>
+    /// A class responsible for generating PERSREP reports.
+    /// Depends on the PERSREP template provided. 
+    /// The cell positions etc are hardcoded, so any drastic changes to the PERSREP format
+    /// will mean changes to this program.
+    /// </summary>
     public class PersrepReportWriter : IReportWriter
     {
+        // Ainsad kohad mida see PERSREP raportija muudab on segmente A ja M (märkmed ja andmed). 
+        // Ülejäänu jaoks on olemas Exceli valemid.
         const int PERSREP_MAX_GROUPS = 14;
         const int PERSREP_FIRST_GROUP_ROW = 10;
         const int PERSREP_GROUP_SIZE = 6;
@@ -32,15 +41,7 @@ namespace personali_raport
         const int PERSREP_REMARKS_HEIGHT = 22;
         const int PERSREP_REMARKS_WIDTH = 10;
         const char PERSREP_REMARKS_START_COL = 'M';
-
-        // A: tegevväelased + personal - touchy
-        // B: ajateenijad    - no touchy
-        // C: reservväelased - no touchy
-        // D: KL tegevliikmed (mitte KVK) - no touchy
-        // E: Allies  - no touchy
-        // F: Summary - no touchy
-        // G: Märkmed: M84:V106 - touchy. Tundmatute kirjete maa
-
+        
         Worksheet worksheet;
         Workbook workbook;
         Application excelApp;
@@ -49,16 +50,12 @@ namespace personali_raport
         /// Instantiates a new PersrepReportWriter along with opening the report 
         /// template.
         /// </summary>
-        /// <param name="fileName">The Excel spreadsheet file name that the report will be based on.</param>
+        /// <param name="fileName">
+        /// Report base filename.
+        /// </param>
         public PersrepReportWriter(string fileName)
         {
             excelApp = new Application();
-
-            /*
-            excelApp.Visible = true;
-            excelApp.UserControl = true;
-            */
-
             workbook = excelApp.Workbooks.Open(fileName);
             worksheet = excelApp.ActiveSheet;
         }
@@ -222,7 +219,6 @@ namespace personali_raport
             {
                 Debug.Print("Failed to close Excel app");
             }
-
         }
 
         public bool HandleUnknownPeople(List<Person> unknownPeople)

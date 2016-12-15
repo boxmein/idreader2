@@ -525,6 +525,14 @@ namespace personali_raport
             personMsgLabel.Visible = false;
         }
         #endregion
+
+        private void clearReportFileBtn_Click(object sender, EventArgs e)
+        {
+            reportFileLabel.Visible = false;
+            clearReportFileBtn.Visible = false;
+            openReportFileBtn.Visible = true;
+            UpdateValidity();
+        }
     }
 }
 
