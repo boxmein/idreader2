@@ -12,9 +12,11 @@ namespace personali_raport
             this.Shown += new EventHandler(windowWasShown);
         }
 
+        public bool showRedWhenNoMessage = false;
+
         private void IDCollectorForm_Load(object sender, EventArgs e)
         {
-
+            
         }
 
         private void windowWasShown(object sender, EventArgs e)
@@ -30,7 +32,15 @@ namespace personali_raport
         public void ShowPerson(string name, string customText)
         {
             nameLabel.Text = name;
-            customTextLabel.Text = customText;
+            if (customText != null && customText != "")
+            {
+                customTextLabel.Text = customText;
+                customTextLabel.BackColor = System.Drawing.Color.Transparent;
+            } else if (this.showRedWhenNoMessage)
+            {
+                customTextLabel.BackColor = System.Drawing.Color.Red;
+                customTextLabel.Text = "Inimesel puudub individuaalteade!";
+            } 
         }
         
         public void SetError(string error)

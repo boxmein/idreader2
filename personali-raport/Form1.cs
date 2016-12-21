@@ -200,6 +200,7 @@ namespace personali_raport
                 loggerProcess.Start();
 
                 idCollectorForm = new IDCollectorForm();
+                idCollectorForm.showRedWhenNoMessage = personalMsgMissingRedChk.Checked;
                 idCollectorForm.Show();
                 idCollectorForm.FormClosed += new FormClosedEventHandler(idCollectorForm_Closed);
 
@@ -244,6 +245,10 @@ namespace personali_raport
             catch (InvalidOperationException)
             {
                 Debug.Print("logger process was already killed");
+            }
+            catch (Win32Exception e)
+            {
+                MessageBox.Show("Viga ID-kaardi lugeja sulgemisel", String.Format("Viga ID-kaardi lugeja sulgemisel: Win32Exception {}, {}", e.NativeErrorCode, e.ToString()), MessageBoxButtons.OK);
             }
 
             loggerState = LoggerState.Initial;
@@ -524,8 +529,6 @@ namespace personali_raport
 
             personMsgLabel.Visible = false;
         }
-        #endregion
-
         private void clearReportFileBtn_Click(object sender, EventArgs e)
         {
             reportFileLabel.Visible = false;
@@ -533,6 +536,11 @@ namespace personali_raport
             openReportFileBtn.Visible = true;
             UpdateValidity();
         }
+        private void personalMsgMissingRedChk_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+        #endregion
     }
 }
 

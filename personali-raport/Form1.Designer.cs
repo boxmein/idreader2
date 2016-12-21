@@ -71,6 +71,7 @@
             this.openPersonMsgFileBtn = new System.Windows.Forms.Button();
             this.personMsgLabel = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
+            this.personalMsgMissingRedChk = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
@@ -438,6 +439,7 @@
             // 
             // personMsgDisplay
             // 
+            this.personMsgDisplay.Controls.Add(this.personalMsgMissingRedChk);
             this.personMsgDisplay.Controls.Add(this.personalMsgFileLabel);
             this.personMsgDisplay.Controls.Add(this.label7);
             this.personMsgDisplay.Controls.Add(this.label5);
@@ -464,7 +466,7 @@
             // 
             // label7
             // 
-            this.label7.Location = new System.Drawing.Point(11, 87);
+            this.label7.Location = new System.Drawing.Point(11, 116);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(58, 23);
             this.label7.TabIndex = 16;
@@ -523,9 +525,9 @@
             // 
             this.personMsgLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.personMsgLabel.ForeColor = System.Drawing.Color.Black;
-            this.personMsgLabel.Location = new System.Drawing.Point(71, 83);
+            this.personMsgLabel.Location = new System.Drawing.Point(71, 116);
             this.personMsgLabel.Name = "personMsgLabel";
-            this.personMsgLabel.Size = new System.Drawing.Size(178, 99);
+            this.personMsgLabel.Size = new System.Drawing.Size(178, 66);
             this.personMsgLabel.TabIndex = 1;
             this.personMsgLabel.Visible = false;
             // 
@@ -537,6 +539,19 @@
             this.label8.TabIndex = 13;
             this.label8.Text = "Programm on koostatud Eesti Kaitseliidu Tartu maleva asutusesiseseks kasutamiseks" +
     ".\r\nTugi: johannes.kadak+ekl@gmail.com\r\n";
+            // 
+            // personalMsgMissingRedChk
+            // 
+            this.personalMsgMissingRedChk.AutoSize = true;
+            this.personalMsgMissingRedChk.Checked = true;
+            this.personalMsgMissingRedChk.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.personalMsgMissingRedChk.Location = new System.Drawing.Point(78, 85);
+            this.personalMsgMissingRedChk.Name = "personalMsgMissingRedChk";
+            this.personalMsgMissingRedChk.Size = new System.Drawing.Size(149, 17);
+            this.personalMsgMissingRedChk.TabIndex = 18;
+            this.personalMsgMissingRedChk.Text = "Teate puudumisel punane";
+            this.personalMsgMissingRedChk.UseVisualStyleBackColor = true;
+            this.personalMsgMissingRedChk.CheckedChanged += new System.EventHandler(this.personalMsgMissingRedChk_CheckedChanged);
             // 
             // Form1
             // 
@@ -571,6 +586,7 @@
             this.dataSelectionGroupBox.ResumeLayout(false);
             this.saveGroupBox.ResumeLayout(false);
             this.personMsgDisplay.ResumeLayout(false);
+            this.personMsgDisplay.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -619,6 +635,7 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label personalMsgFileLabel;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.CheckBox personalMsgMissingRedChk;
     }
 }
 
