@@ -165,10 +165,20 @@ void sCardReaderThread() {
 				std::wcout << L"1 Otsib kaarte..." << std::endl;
 			}
 			else if (sCardReaderState.dwEventState & SCARD_STATE_UNAVAILABLE) {
-				std::wcout << L"0 Kaardilugeja ei ole saadaval" << std::endl;
+				std::wcout << L"0 Kaardilugeja ei ole saadaval " << sCardReaderState.dwEventState << std::endl;
+				ZeroMemory(&sCardReaderState, sizeof(sCardReaderState));
+				sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
+				sCardReaderState.pvUserData = nullptr;
+				sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
+				std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
 			}
 			else if (sCardReaderState.dwEventState & (SCARD_STATE_INUSE | SCARD_STATE_EXCLUSIVE)) {
 				std::wcout << L"0 Kaardilugeja on kasutuses teise rakenduse poolt" << std::endl;
+				ZeroMemory(&sCardReaderState, sizeof(sCardReaderState));
+				sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
+				sCardReaderState.pvUserData = nullptr;
+				sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
+				std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
 			}
 
 			sCardReaderState.dwCurrentState = sCardReaderState.dwEventState;
