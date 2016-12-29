@@ -99,7 +99,7 @@ namespace personali_raport
             }
         }
 
-        #region Error Logger Related Stuff
+        #region Card Reader callbacks
         private void LoggerProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (e.Data == null)
@@ -139,7 +139,7 @@ namespace personali_raport
                     this.Invoke((MethodInvoker)(() => handleNewPerson(lineSplit[1])));
                     break;
                 default: // 3 - "card has been scanned", among other things
-                    this.Invoke((MethodInvoker)(() => loggerOutputLabel.Text = e.Data));
+                    this.Invoke((MethodInvoker)(() => loggerOutputLabel.Text = String.Join(" ", lineSplit.Skip(1))));
                     break;
             }
         }
@@ -248,7 +248,7 @@ namespace personali_raport
             }
             catch (Win32Exception e)
             {
-                MessageBox.Show("Viga ID-kaardi lugeja sulgemisel", String.Format("Viga ID-kaardi lugeja sulgemisel: Win32Exception {}, {}", e.NativeErrorCode, e.ToString()), MessageBoxButtons.OK);
+                MessageBox.Show("Viga ID-kaardi lugeja sulgemisel", String.Format("Viga ID-kaardi koguja sulgemisel: Win32Exception {0}, {1}", e.NativeErrorCode, e.ToString()), MessageBoxButtons.OK);
             }
 
             loggerState = LoggerState.Initial;
@@ -275,6 +275,8 @@ namespace personali_raport
             {
                 generatePersrepBtn.Enabled = false;
             }
+
+            progressStatusLabel.Text = "";
         }
 
         private void OnExit(object sender, EventArgs e)
@@ -541,6 +543,7 @@ namespace personali_raport
 
         }
         #endregion
+
     }
 }
 
