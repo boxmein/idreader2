@@ -5,6 +5,10 @@
 #include "idreader2.h"
 #include <limits.h>
 
+using std::wcout;
+using std::wcerr;
+using std::endl;
+
 #define READERTHREAD
 #define UITHREAD
 
@@ -112,9 +116,6 @@ void sCardReaderThread() {
 	currentTimet = time(0);
 	localtime_s(&currentTime, &currentTimet);
 	
-	wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"andmed-%Y-%m-%d-%H-%M-%S.csv", &currentTime);
-	outputFile.open(szFormatBuffer, std::ios_base::app);
-	
 	wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"logi-%Y-%m-%d-%H-%M-%S.txt", &currentTime);
 	outputLog.open(szFormatBuffer, std::ios_base::app);
 
@@ -124,17 +125,12 @@ void sCardReaderThread() {
 	outputFile.exceptions(std::ios::badbit | std::ios::failbit);
 	outputLog.exceptions(std::ios::badbit | std::ios::failbit);
 
-	if (!outputFile.is_open()) {
-		std::wcerr << "3001 Ei suutnud avada ID-kaardi logimise faili." << std::endl;
-		goto teardown;
-	}
-
 	if (!outputLog.is_open()) {
-		std::wcerr << "3002 Ei suutnud avada vealogide faili." << std::endl;
+		wcerr << "3002 Ei suutnud avada vealogide faili." << endl;
 		goto teardown;
 	}
 
-	std::wcout << "0 === Alustan logimist: " << szFormatBuffer << L" ===" << std::endl;
+	wcout << "0 === Alustan logimist: " << szFormatBuffer << L" ===" << endl;
 
 	// 1. establish a security context
 	sCardErrorCode = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &sCardContext);
@@ -145,7 +141,7 @@ void sCardReaderThread() {
 	sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
 	sCardReaderState.pvUserData = nullptr;
 	sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
-	std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
+	wcout << "1 Otsib kaardilugejaid..." << endl;
 	// 2. start the process:
 	//    
 	//    - list readers
@@ -162,29 +158,29 @@ void sCardReaderThread() {
 				readerState = TRYING_FOR_CARD;
 			}
 			else if (sCardReaderState.dwEventState & SCARD_STATE_EMPTY) {
-				std::wcout << L"1 Otsib kaarte..." << std::endl;
+				wcout << L"1 Otsib kaarte..." << endl;
 			}
 			else if (sCardReaderState.dwEventState & SCARD_STATE_UNAVAILABLE) {
-				std::wcout << L"0 Kaardilugeja ei ole saadaval " << sCardReaderState.dwEventState << std::endl;
+				wcout << L"0 Kaardilugeja ei ole saadaval " << sCardReaderState.dwEventState << endl;
 				ZeroMemory(&sCardReaderState, sizeof(sCardReaderState));
 				sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
 				sCardReaderState.pvUserData = nullptr;
 				sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
-				std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
+				wcout << "1 Otsib kaardilugejaid..." << endl;
 			}
 			else if (sCardReaderState.dwEventState & (SCARD_STATE_INUSE | SCARD_STATE_EXCLUSIVE)) {
-				std::wcout << L"0 Kaardilugeja on kasutuses teise rakenduse poolt" << std::endl;
+				wcout << L"0 Kaardilugeja on kasutuses teise rakenduse poolt" << endl;
 				ZeroMemory(&sCardReaderState, sizeof(sCardReaderState));
 				sCardReaderState.szReader = L"\\\\?PnP?\\Notification";
 				sCardReaderState.pvUserData = nullptr;
 				sCardReaderState.dwEventState = SCARD_STATE_PRESENT;
-				std::wcout << "1 Otsib kaardilugejaid..." << std::endl;
+				wcout << "1 Otsib kaardilugejaid..." << endl;
 			}
 
 			sCardReaderState.dwCurrentState = sCardReaderState.dwEventState;
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"Card reader state changed: eventState=%d currentState=%d\n", sCardReaderState.dwEventState, sCardReaderState.dwCurrentState);
-			std::wcout << "0 " << szFormatBuffer;
+			wcout << "0 " << szFormatBuffer;
 
 			// 65538 seems to mean "card reader attached! now go figure out its name"
 			if (sCardReaderState.dwCurrentState == 65538) {
@@ -195,13 +191,13 @@ void sCardReaderThread() {
 		}
 		else if (readerState == TRYING_FOR_CARD) {
 			
-			std::wcout << L"1 Ühendan kaardiga..." << std::endl;
+			wcout << L"1 Ühendan kaardiga..." << endl;
 
 			sCardErrorCode = SCardConnect(sCardContext, sCardReaderState.szReader, SCARD_SHARE_SHARED,
 				SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &sCardHandle, &sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"SCardConnect: %x", (unsigned long)sCardErrorCode);
-			std::wcout << L"0 " << szFormatBuffer << std::endl;
+			wcout << L"0 " << szFormatBuffer << endl;
 
 			if (sCardErrorCode == SCARD_S_SUCCESS) {
 				readerState = READING_CARD;
@@ -214,11 +210,11 @@ void sCardReaderThread() {
 		}
 		else if (readerState == READING_CARD) {
 
-			std::wcout << L"1 Loen kaarti..." << std::endl;
+			wcout << L"1 Loen kaarti..." << endl;
 			sCardErrorCode = openSCardPersonalFile(sCardHandle, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"openSCardPersonalFile: %x", (unsigned long)sCardErrorCode);
-			std::wcout << "0 " << szFormatBuffer << std::endl;
+			wcout << "0 " << szFormatBuffer << endl;
 
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
 			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
@@ -234,7 +230,7 @@ void sCardReaderThread() {
 			sCardErrorCode = readSCardPersonalFile(sCardHandle, EID_IDNUMBER, sCardRecvBuffer, &sCardRecvBytes, sCardActiveProtocol);
 
 			StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"readSCardPersonalFile: %x", (unsigned long)sCardErrorCode);
-			std::wcout << "0 " << szFormatBuffer << std::endl;
+			wcout << "0 " << szFormatBuffer << endl;
 
 			SCARD_FATAL_ERROR(hWnd, &outputLog, sCardErrorCode);
 			if (sCardHandleReaderErrors(sCardErrorCode, &readerState) ||
@@ -247,12 +243,12 @@ void sCardReaderThread() {
 
 			if (wmemcpy_s(person.idNumber, EID_LEN_IDNUMBER, szFormatBuffer, EID_LEN_IDNUMBER) != 0) {
 				OutputDebugString(L"Failed to copy received ID number over to person object.\n");
-				std::wcout << "3003 " << L"Viga andmete mälus liigutamisel" << std::endl;
+				wcout << "3003 " << L"Viga andmete mälus liigutamisel" << endl;
 			}
 
 			if (sCardErrorCode == SCARD_W_REMOVED_CARD || sCardErrorCode == SCARD_E_NO_SMARTCARD) {
 				OutputDebugString(L"Card was removed - waiting for new card...\n");
-				std::wcout << "0 Kaart eemaldati - ootan järgmist..." << std::endl;
+				wcout << "0 Kaart eemaldati - ootan järgmist..." << endl;
 				readerState = TRYING_FOR_CARD;
 				continue;
 			}
@@ -345,7 +341,7 @@ void sCardReaderThread() {
 		else if (readerState == WAITING_REMOVE) {
 			OutputDebugString(L"Done reading this card.\n");
 			SCardDisconnect(sCardHandle, SCARD_UNPOWER_CARD);
-			std::wcout << "Kaart on loetud." << std::endl;
+			wcout << "Kaart on loetud." << endl;
 
 			// TODO: handle errors.
 
@@ -372,45 +368,16 @@ void sCardReaderThread() {
 				wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
 
 				// Let the GUI know we've read an ID card
-				std::wcout << "2 Time=\""    << szFormatBuffer << "\""
+				wcout << "2 Time=\""    << szFormatBuffer << "\""
 							<< " IDcode="    << person.idNumber 
 							<< " FirstName=" << person.firstName 
-							<< " LastName="  << person.lastName << std::endl;
+							<< " LastName="  << person.lastName << endl;
 
-				// Output person structure to file
-				try {
-					// "2016-05-12 14:45:50 +0400", 39610042010
-					outputFile << L'"' << szFormatBuffer << L"\"," << person.idNumber << L"," << person.firstName << L"," << person.lastName << std::endl;
-					outputFile.flush();
-
-					if (outputFile.fail()) {
-						std::wcerr << "3004 ID-kaardi lugeja teatab failiga seonduvast veast." << std::endl;
-					}
-
-					MessageBeep(0xFFFFFFFF);
-				}
-				catch (const std::exception &e) {
-					OutputDebugString(L"IO error thrown:\n\t");
-					const char* errorMessage = e.what();
-					strerror_s(cFormatBuffer, FORMAT_BUFFER_SIZE);
-					DWORD lasterror = GetLastError();
-
-					std::wcerr << "3005 IO veateade: " << errorMessage
-						<< " errno: " << errno
-						<< " strerror_s tulemus: " << cFormatBuffer
-						<< " GetLastError(): " << lasterror
-						<< std::endl;
-					outputLog << "3005 IO veateade: " << errorMessage
-						<< " errno: " << errno
-						<< " strerror_s tulemus: " << cFormatBuffer
-						<< " GetLastError(): " << lasterror
-						<< std::endl;
-					goto teardown;
-				}
+				MessageBeep(0xFFFFFFFF);
 			}
 			else {
 				OutputDebugString(L"Did not log card because have seen it before");
-				std::wcout << "3 Kaart on juba loetud!" << std::endl;
+				wcout << "3 Kaart on juba loetud!" << endl;
 			}
 
 			// Wait for empty state
@@ -430,7 +397,7 @@ teardown:
 	free(idCodeBuffer);
 	outputFile.close();
 	outputLog.close();
-	std::wcout << L"1 Töö lõpetatud.";
+	wcout << L"1 Töö lõpetatud.";
 	return;
 }
 DWORD openSCardPersonalFile(SCARDHANDLE sCardHandle, LPBYTE receiveBuffer, LPDWORD receivedBytes, DWORD sCardActiveProtocol) {
@@ -569,8 +536,8 @@ void showSCardErrorMessage(std::wofstream *outputLog, DWORD errorCode) {
 	StringCbPrintf(szFormatBuffer, FORMAT_BUFFER_SIZE, L"Fatal error (%x)\n", errorCode);
 	OutputDebugString(szFormatBuffer);
 
-	*outputLog << L"Viga ID-kaarti lugedes: " << sCardErrorMessage << std::endl;
-	*outputLog << L"Veakood: " << errorCode << std::endl;
+	*outputLog << L"Viga ID-kaarti lugedes: " << sCardErrorMessage << endl;
+	*outputLog << L"Veakood: " << errorCode << endl;
 }
 bool sCardHandleReaderErrors(DWORD errorCode, enum readerState *rs) {
 	if (errorCode == SCARD_E_READER_UNAVAILABLE || 
