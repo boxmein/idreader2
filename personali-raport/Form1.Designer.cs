@@ -57,27 +57,20 @@
             this.reportCreatorGroupBox = new System.Windows.Forms.GroupBox();
             this.reportOptionAttendance = new System.Windows.Forms.RadioButton();
             this.reportOptionPersrep = new System.Windows.Forms.RadioButton();
-            this.dataSelectionGroupBox = new System.Windows.Forms.GroupBox();
-            this.clearPersonnelFilesBtn = new System.Windows.Forms.Button();
-            this.clearReportFileBtn = new System.Windows.Forms.Button();
-            this.clearDataFilesBtn = new System.Windows.Forms.Button();
-            this.dataFileLabel = new System.Windows.Forms.Label();
-            this.reportFileLabel = new System.Windows.Forms.Label();
-            this.personnelFileLabel = new System.Windows.Forms.Label();
-            this.openReportFileBtn = new System.Windows.Forms.Button();
-            this.openPersonnelFileBtn = new System.Windows.Forms.Button();
-            this.openDataFileBtn = new System.Windows.Forms.Button();
             this.saveGroupBox = new System.Windows.Forms.GroupBox();
             this.saveReportButton = new System.Windows.Forms.Button();
             this.progressStatusLabel = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.openDatabaseButton = new System.Windows.Forms.Button();
+            this.databaseConnectionErrorMsg = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
-            this.dataSelectionGroupBox.SuspendLayout();
             this.saveGroupBox.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -149,7 +142,6 @@
             this.personalMsgMissingRedChk.TabIndex = 18;
             this.personalMsgMissingRedChk.Text = "Teate puudumisel punane";
             this.personalMsgMissingRedChk.UseVisualStyleBackColor = true;
-            this.personalMsgMissingRedChk.CheckedChanged += new System.EventHandler(this.personalMsgMissingRedChk_CheckedChanged);
             // 
             // startDataCollectionPanel
             // 
@@ -355,6 +347,7 @@
             this.timeFilterGroupBox.Controls.Add(this.dataSelectionEndDate);
             this.timeFilterGroupBox.Controls.Add(this.label4);
             this.timeFilterGroupBox.Controls.Add(this.label3);
+            this.timeFilterGroupBox.Enabled = false;
             this.timeFilterGroupBox.Location = new System.Drawing.Point(12, 150);
             this.timeFilterGroupBox.Name = "timeFilterGroupBox";
             this.timeFilterGroupBox.Size = new System.Drawing.Size(259, 120);
@@ -367,6 +360,7 @@
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionAttendance);
             this.reportCreatorGroupBox.Controls.Add(this.generatePersrepBtn);
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionPersrep);
+            this.reportCreatorGroupBox.Enabled = false;
             this.reportCreatorGroupBox.Location = new System.Drawing.Point(10, 276);
             this.reportCreatorGroupBox.Name = "reportCreatorGroupBox";
             this.reportCreatorGroupBox.Size = new System.Drawing.Size(261, 72);
@@ -398,118 +392,11 @@
             this.reportOptionPersrep.UseVisualStyleBackColor = true;
             this.reportOptionPersrep.CheckedChanged += new System.EventHandler(this.reportOptionPersrep_CheckedChanged);
             // 
-            // dataSelectionGroupBox
-            // 
-            this.dataSelectionGroupBox.Controls.Add(this.clearPersonnelFilesBtn);
-            this.dataSelectionGroupBox.Controls.Add(this.clearReportFileBtn);
-            this.dataSelectionGroupBox.Controls.Add(this.clearDataFilesBtn);
-            this.dataSelectionGroupBox.Controls.Add(this.dataFileLabel);
-            this.dataSelectionGroupBox.Controls.Add(this.reportFileLabel);
-            this.dataSelectionGroupBox.Controls.Add(this.personnelFileLabel);
-            this.dataSelectionGroupBox.Controls.Add(this.openReportFileBtn);
-            this.dataSelectionGroupBox.Controls.Add(this.openPersonnelFileBtn);
-            this.dataSelectionGroupBox.Controls.Add(this.openDataFileBtn);
-            this.dataSelectionGroupBox.Location = new System.Drawing.Point(12, 12);
-            this.dataSelectionGroupBox.Name = "dataSelectionGroupBox";
-            this.dataSelectionGroupBox.Size = new System.Drawing.Size(259, 132);
-            this.dataSelectionGroupBox.TabIndex = 7;
-            this.dataSelectionGroupBox.TabStop = false;
-            this.dataSelectionGroupBox.Text = "Üksuse tabel ja kogutud logid";
-            // 
-            // clearPersonnelFilesBtn
-            // 
-            this.clearPersonnelFilesBtn.Location = new System.Drawing.Point(12, 29);
-            this.clearPersonnelFilesBtn.Name = "clearPersonnelFilesBtn";
-            this.clearPersonnelFilesBtn.Size = new System.Drawing.Size(26, 26);
-            this.clearPersonnelFilesBtn.TabIndex = 5;
-            this.clearPersonnelFilesBtn.Text = "X";
-            this.clearPersonnelFilesBtn.UseVisualStyleBackColor = true;
-            this.clearPersonnelFilesBtn.Visible = false;
-            this.clearPersonnelFilesBtn.Click += new System.EventHandler(this.clearPersonnelFilesBtn_Click);
-            // 
-            // clearReportFileBtn
-            // 
-            this.clearReportFileBtn.Location = new System.Drawing.Point(12, 92);
-            this.clearReportFileBtn.Name = "clearReportFileBtn";
-            this.clearReportFileBtn.Size = new System.Drawing.Size(26, 26);
-            this.clearReportFileBtn.TabIndex = 10;
-            this.clearReportFileBtn.Text = "X";
-            this.clearReportFileBtn.UseVisualStyleBackColor = true;
-            this.clearReportFileBtn.Visible = false;
-            this.clearReportFileBtn.Click += new System.EventHandler(this.clearReportFileBtn_Click);
-            // 
-            // clearDataFilesBtn
-            // 
-            this.clearDataFilesBtn.Location = new System.Drawing.Point(12, 61);
-            this.clearDataFilesBtn.Name = "clearDataFilesBtn";
-            this.clearDataFilesBtn.Size = new System.Drawing.Size(26, 26);
-            this.clearDataFilesBtn.TabIndex = 4;
-            this.clearDataFilesBtn.Text = "X";
-            this.clearDataFilesBtn.UseVisualStyleBackColor = true;
-            this.clearDataFilesBtn.Visible = false;
-            this.clearDataFilesBtn.Click += new System.EventHandler(this.clearDataFilesBtn_Click);
-            // 
-            // dataFileLabel
-            // 
-            this.dataFileLabel.Location = new System.Drawing.Point(38, 67);
-            this.dataFileLabel.Name = "dataFileLabel";
-            this.dataFileLabel.Size = new System.Drawing.Size(208, 20);
-            this.dataFileLabel.TabIndex = 3;
-            this.dataFileLabel.Text = "dataFileLabel";
-            this.dataFileLabel.Visible = false;
-            // 
-            // reportFileLabel
-            // 
-            this.reportFileLabel.Location = new System.Drawing.Point(39, 95);
-            this.reportFileLabel.Name = "reportFileLabel";
-            this.reportFileLabel.Size = new System.Drawing.Size(125, 20);
-            this.reportFileLabel.TabIndex = 9;
-            this.reportFileLabel.Text = "reportFileLabel";
-            this.reportFileLabel.Visible = false;
-            // 
-            // personnelFileLabel
-            // 
-            this.personnelFileLabel.Location = new System.Drawing.Point(38, 34);
-            this.personnelFileLabel.Name = "personnelFileLabel";
-            this.personnelFileLabel.Size = new System.Drawing.Size(195, 19);
-            this.personnelFileLabel.TabIndex = 2;
-            this.personnelFileLabel.Text = "personnelFileLabel";
-            this.personnelFileLabel.Visible = false;
-            // 
-            // openReportFileBtn
-            // 
-            this.openReportFileBtn.Location = new System.Drawing.Point(10, 90);
-            this.openReportFileBtn.Name = "openReportFileBtn";
-            this.openReportFileBtn.Size = new System.Drawing.Size(121, 30);
-            this.openReportFileBtn.TabIndex = 11;
-            this.openReportFileBtn.Text = "Vali dokumendi põhi";
-            this.openReportFileBtn.UseVisualStyleBackColor = true;
-            this.openReportFileBtn.Click += new System.EventHandler(this.openReportFileBtn_Click);
-            // 
-            // openPersonnelFileBtn
-            // 
-            this.openPersonnelFileBtn.Location = new System.Drawing.Point(10, 27);
-            this.openPersonnelFileBtn.Name = "openPersonnelFileBtn";
-            this.openPersonnelFileBtn.Size = new System.Drawing.Size(121, 30);
-            this.openPersonnelFileBtn.TabIndex = 6;
-            this.openPersonnelFileBtn.Text = "Ava üksuse tabel";
-            this.openPersonnelFileBtn.UseVisualStyleBackColor = true;
-            this.openPersonnelFileBtn.Click += new System.EventHandler(this.openPersonnelFileBtn_Click);
-            // 
-            // openDataFileBtn
-            // 
-            this.openDataFileBtn.Location = new System.Drawing.Point(10, 59);
-            this.openDataFileBtn.Name = "openDataFileBtn";
-            this.openDataFileBtn.Size = new System.Drawing.Size(121, 30);
-            this.openDataFileBtn.TabIndex = 7;
-            this.openDataFileBtn.Text = "Ava kogutud logid";
-            this.openDataFileBtn.UseVisualStyleBackColor = true;
-            this.openDataFileBtn.Click += new System.EventHandler(this.openDataFileBtn_Click);
-            // 
             // saveGroupBox
             // 
             this.saveGroupBox.Controls.Add(this.saveReportButton);
             this.saveGroupBox.Controls.Add(this.progressStatusLabel);
+            this.saveGroupBox.Enabled = false;
             this.saveGroupBox.Location = new System.Drawing.Point(11, 354);
             this.saveGroupBox.Name = "saveGroupBox";
             this.saveGroupBox.Size = new System.Drawing.Size(260, 63);
@@ -544,14 +431,46 @@
             this.label8.Text = "Programm on koostatud Eesti Kaitseliidu Tartu maleva asutusesiseseks kasutamiseks" +
     ".\r\nTugi: johannes.kadak+ekl@gmail.com\r\n";
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.databaseConnectionErrorMsg);
+            this.groupBox2.Controls.Add(this.openDatabaseButton);
+            this.groupBox2.Location = new System.Drawing.Point(10, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(261, 132);
+            this.groupBox2.TabIndex = 14;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Andmebaasiühendus";
+            // 
+            // openDatabaseButton
+            // 
+            this.openDatabaseButton.Location = new System.Drawing.Point(10, 25);
+            this.openDatabaseButton.Name = "openDatabaseButton";
+            this.openDatabaseButton.Size = new System.Drawing.Size(245, 30);
+            this.openDatabaseButton.TabIndex = 0;
+            this.openDatabaseButton.Text = "Ava andmebaas (.accdb)";
+            this.openDatabaseButton.UseVisualStyleBackColor = true;
+            this.openDatabaseButton.Click += new System.EventHandler(this.openDatabaseButton_Click);
+            // 
+            // databaseConnectionErrorMsg
+            // 
+            this.databaseConnectionErrorMsg.AutoSize = true;
+            this.databaseConnectionErrorMsg.ForeColor = System.Drawing.Color.Red;
+            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(11, 61);
+            this.databaseConnectionErrorMsg.Name = "databaseConnectionErrorMsg";
+            this.databaseConnectionErrorMsg.Size = new System.Drawing.Size(185, 13);
+            this.databaseConnectionErrorMsg.TabIndex = 1;
+            this.databaseConnectionErrorMsg.Text = "Andmebaasi laadimine ei õnnestunud.";
+            this.databaseConnectionErrorMsg.Visible = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(544, 424);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.saveGroupBox);
-            this.Controls.Add(this.dataSelectionGroupBox);
             this.Controls.Add(this.reportCreatorGroupBox);
             this.Controls.Add(this.timeFilterGroupBox);
             this.Controls.Add(this.groupBox1);
@@ -571,8 +490,9 @@
             this.timeFilterGroupBox.PerformLayout();
             this.reportCreatorGroupBox.ResumeLayout(false);
             this.reportCreatorGroupBox.PerformLayout();
-            this.dataSelectionGroupBox.ResumeLayout(false);
             this.saveGroupBox.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -593,23 +513,13 @@
         private System.Windows.Forms.GroupBox reportCreatorGroupBox;
         private System.Windows.Forms.RadioButton reportOptionAttendance;
         private System.Windows.Forms.RadioButton reportOptionPersrep;
-        private System.Windows.Forms.GroupBox dataSelectionGroupBox;
-        private System.Windows.Forms.Label personnelFileLabel;
-        private System.Windows.Forms.Label dataFileLabel;
-        private System.Windows.Forms.Button clearDataFilesBtn;
-        private System.Windows.Forms.Button clearPersonnelFilesBtn;
         private System.Windows.Forms.Panel startDataCollectionPanel;
         private System.Windows.Forms.Button startDataCollectionBtn;
         private System.Windows.Forms.Label loggerErrorLabel;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Button openPersonnelFileBtn;
-        private System.Windows.Forms.Button openDataFileBtn;
         private System.Windows.Forms.GroupBox saveGroupBox;
         private System.Windows.Forms.Button saveReportButton;
         private System.Windows.Forms.Label progressStatusLabel;
-        private System.Windows.Forms.Button clearReportFileBtn;
-        private System.Windows.Forms.Label reportFileLabel;
-        private System.Windows.Forms.Button openReportFileBtn;
         private System.Windows.Forms.Label loggerOutputLabel;
         private System.Windows.Forms.Label personNameLabel;
         private System.Windows.Forms.Label personMsgLabel;
@@ -621,6 +531,9 @@
         private System.Windows.Forms.Label personalMsgFileLabel;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckBox personalMsgMissingRedChk;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button openDatabaseButton;
+        private System.Windows.Forms.Label databaseConnectionErrorMsg;
     }
 }
 

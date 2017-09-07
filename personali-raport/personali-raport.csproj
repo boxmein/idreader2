@@ -85,6 +85,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AccessWriter.cs" />
     <Compile Include="AttendanceReportWriter.cs" />
     <Compile Include="CardLogReader.cs" />
     <Compile Include="IDCollectorForm.cs">

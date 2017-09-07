@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
+using System.Data.OleDb;
 
 namespace personali_raport
 {
@@ -23,27 +24,91 @@ namespace personali_raport
 
     public partial class Form1 : Form
     {
+        /// <summary>
+        /// Allows access to write to a MS Access database. (ha, get it)
+        /// </summary>
+        AccessWriter writer;
+
+        /// <summary>
+        /// The user-provided settings to compose the report from.
+        /// This contains the files to base the report on, plus the report type
+        /// (PERSREP or Attendance), plus the date limits.
+        /// </summary>
         ReportSettings settings;
+
+        /// <summary>
+        /// A state machine describing the ID card logger.
+        /// Initial = "nothing going on"
+        /// CollectingData = "Actively collecting data"
+        /// Erroring = "There was an error"
+        /// </summary>
         LoggerState loggerState = LoggerState.Initial;
+        
+        /// <summary>
+        /// How many fools have I scanned today?
+        /// (Not too many to count!)
+        /// </summary>
         int loggerScannedCount = 0;
 
+        /// <summary>
+        /// The Report Writer that will be used to compose the report.
+        /// </summary>
         IReportWriter reportWriter;
+
+        /// <summary>
+        /// An object that allows access to a CSV file filled with Personal Messages.
+        /// These can be set per ID code, and will display on the big fullscreen
+        /// reader window.
+        /// </summary>
         PersonMessageReader pmReader;
+
+        /// <summary>
+        /// Manages the idreader2 executable used to gather ID card data.
+        /// </summary>
         Process loggerProcess;
 
+        /// <summary>
+        /// The regex to match the first name from the ID card reader output.
+        /// </summary>
         Regex firstNameRx = new Regex(@"FirstName=(\w+)");
+        
+        /// <summary>
+        /// The regex to match the last name from the ID card reader output.
+        /// </summary>
         Regex lastNameRx = new Regex(@"LastName=(\w+)");
-        Regex idCodeRx = new Regex(@"IDcode=(\d+)");
 
+        /// <summary>
+        /// The regex to match the ID code from the ID card reader output.
+        /// </summary>
+        Regex idCodeRx = new Regex(@"IDcode=([0-9]{11})");
+
+        /// <summary>
+        /// A Form that shows up when the ID card reader is collecting data.
+        /// Shows the current person's name, ID code and personal message.
+        /// </summary>
         IDCollectorForm idCollectorForm; 
 
-
+        /// <summary>
+        /// Constructs the Form.
+        /// Initializes the ReportSettings object.
+        /// </summary>
+        /// <seealso cref="ReportSettings"/>
         public Form1()
         {
             settings = new ReportSettings();
             InitializeComponent();
         }
         
+        /// <summary>
+        /// Initializes the ID card reader:
+        /// Fills in the report settings with their default values.
+        /// Shows the "Start data collection" UI.
+        /// Hides the "Data collection progress" UI.
+        /// Sets start & end of report to time filter settings or start/end of time.
+        /// Sets up the subprocess structure for idreader2 (./idreader2.exe), and adds hooks.
+        /// </summary>
+        /// <param name="sender">sender</param>
+        /// <param name="e">event</param>
         private void Form1_Load(object sender, EventArgs e)
         {
             // Initialize settings
@@ -100,6 +165,11 @@ namespace personali_raport
         }
 
         #region Card Reader callbacks
+        /// <summary>
+        /// Called when idreader2 sends messages to stderr.
+        /// </summary>
+        /// <param name="sender">sender</param>
+        /// <param name="e">event</param>
         private void LoggerProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (e.Data == null)
@@ -115,6 +185,12 @@ namespace personali_raport
             this.Invoke((MethodInvoker) (() => this.idCollectorForm.SetError(e.Data)));
         }
 
+        /// <summary>
+        /// Called when idreader2 sends messages to stdout.
+        /// (Messages such as collected ID cards!)
+        /// </summary>
+        /// <param name="sender">sender</param>
+        /// <param name="e">event</param>
         private void LoggerProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             Console.WriteLine(e.Data);
@@ -144,9 +220,25 @@ namespace personali_raport
             }
         }
 
+        /// <summary>
+        /// When a collected ID card message is sent, parse it into personal details and log them
+        /// to Access.
+        /// 
+        /// Additionally, update the personnel counter and displayed name string.
+        /// 
+        /// If a person's first or last name are not found, the name will not get updated.
+        /// If a person's first or last name or ID code are not found, the person will not get logged.
+        /// </summary>
+        /// <param name="personStructure">A string that matches firstNameRx, lastNameRx, and idCodeRx.</param>
+        /// <seealso cref="LoggerProcess_OutputDataReceived(object, DataReceivedEventArgs)"/>
+        /// <seealso cref="firstNameRx" />
+        /// <seealso cref="lastNameRx" />
+        /// <seealso cref="idCodeRx" />
         private void handleNewPerson(string personStructure)
         {
-            string firstName = null, lastName = null, idCode;
+            string firstName = null;
+            string lastName = null;
+            string idCode = null;
 
             loggerScannedCount++;
             loggerCountLabel.Text = loggerScannedCount + " inimest";
@@ -175,14 +267,32 @@ namespace personali_raport
             }
 
 
+
             match = idCodeRx.Match(personStructure);
 
-            if (pmReader != null && match.Groups.Count == 2)
+            if (match.Groups.Count == 2)
             {
                 idCode = match.Groups[1].Value;
-                personMsgLabel.Text = pmReader.GetPersonMessage(idCode);
+
+                if (pmReader != null)
+                {
+                    personMsgLabel.Text = pmReader.GetPersonMessage(idCode);
+                }
             }
 
+            Debug.Print("First name: {0}", firstName);
+            Debug.Print("Last name: {0}", lastName);
+            Debug.Print("ID code: {0}", match);
+
+            if (firstName != null &&
+                lastName != null &&
+                idCode != null)
+            {
+                writer.log(firstName, lastName, idCode);
+            } else
+            {
+                Debug.Print("Could not extract first name, last name or ID code from\n{0}", personStructure);
+            }
             this.idCollectorForm?.ShowPerson(personNameLabel.Text, personMsgLabel.Text);
         }
 
@@ -259,7 +369,15 @@ namespace personali_raport
 
         #endregion
 
-
+        /// <summary>
+        /// Validate the selected options and decide whether we can generate the required
+        /// report.
+        /// Sets generatePersrepBtn.Enabled to true if everything is valid:
+        /// - the user has selected logs to include in the report
+        /// - each of the log files exists
+        /// - start & end of report are not null
+        /// - personnel file name & report template file name are not null and the files exist
+        /// </summary>
         private void UpdateValidity()
         {
             if (settings.dataFiles != null && settings.dataFiles.Length > 0 &&
@@ -279,6 +397,11 @@ namespace personali_raport
             progressStatusLabel.Text = "";
         }
 
+        /// <summary>
+        /// When the process closes, close Excel with it.
+        /// </summary>
+        /// <param name="sender">sender</param>
+        /// <param name="e">event</param>
         private void OnExit(object sender, EventArgs e)
         {
             if (reportWriter != null)
@@ -287,6 +410,12 @@ namespace personali_raport
             }
         }
 
+        /// <summary>
+        /// Collect personnel file data and feed them to the ReportWriter.
+        /// </summary>
+        /// <seealso cref="IReportWriter"/>
+        /// <seealso cref="PersrepReportWriter"/>
+        /// <seealso cref="AttendanceReportWriter"/>
         private void GenerateReport()
         {
             PersonnelReader personnelReader = new PersonnelReader(settings.personnelFileName);
@@ -370,60 +499,6 @@ namespace personali_raport
         }
 
         #region Form Event Handlers
-        private void openPersonnelFileBtn_Click(object sender, EventArgs e)
-        {
-            var ofd = new OpenFileDialog();
-            ofd.Filter = "Excel spreadsheets|*.xlsx";
-            var dr = ofd.ShowDialog();
-            if (dr == DialogResult.OK)
-            {
-                settings.personnelFileName = ofd.FileName;
-
-                openPersonnelFileBtn.Visible = false;
-                clearPersonnelFilesBtn.Visible = true;
-                personnelFileLabel.Visible = true;
-
-                personnelFileLabel.Text = Path.GetFileName(ofd.FileName);
-
-                UpdateValidity();
-            }
-        }
-        private void openDataFileBtn_Click(object sender, EventArgs e)
-        {
-            var ofd = new OpenFileDialog();
-            ofd.Multiselect = true;
-            ofd.Filter = "Comma-separated values|*.csv";
-            var dr = ofd.ShowDialog();
-            if (dr == DialogResult.OK)
-            {
-                settings.dataFiles = ofd.FileNames;
-
-                openDataFileBtn.Visible = false;
-                clearDataFilesBtn.Visible = true;
-                dataFileLabel.Visible = true;
-
-                dataFileLabel.Text = "Valitud " + ofd.FileNames.Length + " fail" + (ofd.FileNames.Length > 1 ? "i" : "");
-
-                UpdateValidity();
-            }
-        }
-        private void openReportFileBtn_Click(object sender, EventArgs e)
-        {
-            var ofd = new OpenFileDialog();
-            ofd.Filter = "Excel spreadsheets|*.xlsx";
-            var dr = ofd.ShowDialog();
-            if (dr == DialogResult.OK)
-            {
-                settings.reportTemplate = ofd.FileName;
-
-                openReportFileBtn.Visible = false;
-                clearReportFileBtn.Visible = true;
-                reportFileLabel.Visible = true;
-
-                reportFileLabel.Text = Path.GetFileName(ofd.FileName);
-                UpdateValidity();
-            }
-        }
         private void dataSelectionStartDate_ValueChanged(object sender, EventArgs e)
         {
             settings.startOfReport = dataSelectionStartDate.Value;
@@ -490,20 +565,7 @@ namespace personali_raport
                 Debug.Print("Report type is now Attendance");
             }
         }
-        private void clearPersonnelFilesBtn_Click(object sender, EventArgs e)
-        {
-            personnelFileLabel.Visible = false;
-            clearPersonnelFilesBtn.Visible = false;
-            openPersonnelFileBtn.Visible = true;
-            UpdateValidity();
-        }
-        private void clearDataFilesBtn_Click(object sender, EventArgs e)
-        {
-            dataFileLabel.Visible = false;
-            clearDataFilesBtn.Visible = false;
-            openDataFileBtn.Visible = true;
-            UpdateValidity();
-        }
+
         private void openPersonMsgFileBtn_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -531,19 +593,32 @@ namespace personali_raport
 
             personMsgLabel.Visible = false;
         }
-        private void clearReportFileBtn_Click(object sender, EventArgs e)
+        private void openDatabaseButton_Click(object sender, EventArgs e)
         {
-            reportFileLabel.Visible = false;
-            clearReportFileBtn.Visible = false;
-            openReportFileBtn.Visible = true;
-            UpdateValidity();
+            var ofd = new OpenFileDialog();
+            ofd.Filter = "Access databases|*.accdb";
+            
+            if (ofd.ShowDialog() == DialogResult.OK && !ofd.FileName.Equals(""))
+            {
+                try {
+                    writer = new AccessWriter(ofd.FileName);
+                    databaseConnectionErrorMsg.Visible = false;
+                    openDatabaseButton.Enabled = false;
+                } catch (InvalidOperationException ex) {
+                    Debug.Print(ex.ToString());
+                    openDatabaseButton.Enabled = false;
+                    databaseConnectionErrorMsg.Visible = true;
+                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+                } catch (OleDbException ex)
+                {
+                    Debug.Print(ex.ToString());
+                    databaseConnectionErrorMsg.Visible = true;
+                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei õnnestunud.";
+                }
+            }
         }
-        private void personalMsgMissingRedChk_CheckedChanged(object sender, EventArgs e)
-        {
 
-        }
         #endregion
-
     }
 }
 
