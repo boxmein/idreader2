@@ -4,22 +4,34 @@ using System.Text;
 using System.Data.OleDb;
 using System.Diagnostics;
 
+/*
+    ==== MS Access Table Structure ====
+
+    This class writes data into Access to the table called IDKaardid.
+
+    This is how to create the expected table structure in Access:
+
+    Access: 
+    Create Table >
+        Name: IDKaardid
+        Columns:
+            - ID                created automatically (integer primary key)
+            - Eesnimi           Text
+            - Perekonnanimi     Text
+            - Kellaaeg          Date/Time
+            - Isikukood         Text
+*/
+
 namespace personali_raport
 {
     /// <summary>
-    /// A class that allows connecting to MS Access databases and logging data there.
+    /// A class that implements logging signins to a Microsoft Access table.
     /// </summary>
     public class AccessWriter : IDisposable
     {
         
         /// <summary>
         ///  The name of the table that the ID card logs will be put into.
-        ///  
-        ///  Must have the following fields:
-        ///     Eesnimi (string)
-        ///     Perekonnanimi (string)
-        ///     Isikukood (string)
-        ///     Kellaaeg (Date & Time)
         /// </summary>
         const string LOGS_TABLE_NAME = "IDKaardid";
 
@@ -34,26 +46,14 @@ namespace personali_raport
         OleDbConnection databaseConnection;
 
         /// <summary>
-        /// Get the connection string needed to create the OLE DB connection to the Access DB.
-        /// </summary>
-        /// <param name="filename">The full path to the .accdb file: "C:\access\Database.accdb"</param>
-        /// <returns>The connection string (OLE DB 12.0) with the correct Access DB.</returns>
-        static string GetConnectionString(string filename)
-        {
-            return String.Format("Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0}", filename);
-        }
-
-        /// <summary>
         /// Creates the AccessWriter object, creates a database connection to the Access database
         /// specified by filename.
         /// </summary>
-        /// <param name="filename">The full path filename of the Access Database, eg "C:\Access\Database.accdb"</param>
+        /// <param name="filename">An opened OLE DB Connection.</param>
         /// <seealso cref="OleDbConnection" />
-        public AccessWriter(string filename)
+        public AccessWriter(OleDbConnection connection)
         {
-            databaseConnection = new OleDbConnection(GetConnectionString(filename));
-            databaseConnection.Open();
-            Debug.Print("Database connected to: " + filename);
+            databaseConnection = connection;
         }
 
         /// <summary>

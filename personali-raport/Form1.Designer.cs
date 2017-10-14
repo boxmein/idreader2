@@ -28,8 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.label7 = new System.Windows.Forms.Label();
             this.personalMsgFileLabel = new System.Windows.Forms.Label();
             this.personMsgLabel = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
@@ -46,7 +44,6 @@
             this.clearPersonMsgFile = new System.Windows.Forms.Button();
             this.personNameLabel = new System.Windows.Forms.Label();
             this.openPersonMsgFileBtn = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
             this.timeFilterEnabledCheckbox = new System.Windows.Forms.CheckBox();
             this.generatePersrepBtn = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
@@ -60,52 +57,26 @@
             this.saveGroupBox = new System.Windows.Forms.GroupBox();
             this.saveReportButton = new System.Windows.Forms.Button();
             this.progressStatusLabel = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.openDatabaseButton = new System.Windows.Forms.Button();
             this.databaseConnectionErrorMsg = new System.Windows.Forms.Label();
-            this.groupBox1.SuspendLayout();
+            this.openDatabaseButton = new System.Windows.Forms.Button();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.startDataCollectionPanel.SuspendLayout();
             this.dataCollectionProgressPanel.SuspendLayout();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
             this.saveGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.groupBox1.Controls.Add(this.label7);
-            this.groupBox1.Controls.Add(this.personalMsgFileLabel);
-            this.groupBox1.Controls.Add(this.personMsgLabel);
-            this.groupBox1.Controls.Add(this.label5);
-            this.groupBox1.Controls.Add(this.personalMsgMissingRedChk);
-            this.groupBox1.Controls.Add(this.startDataCollectionPanel);
-            this.groupBox1.Controls.Add(this.dataCollectionProgressPanel);
-            this.groupBox1.Controls.Add(this.clearPersonMsgFile);
-            this.groupBox1.Controls.Add(this.personNameLabel);
-            this.groupBox1.Controls.Add(this.openPersonMsgFileBtn);
-            this.groupBox1.Controls.Add(this.label2);
-            this.groupBox1.Location = new System.Drawing.Point(277, 12);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(264, 300);
-            this.groupBox1.TabIndex = 1;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Andmete kogumine";
-            // 
-            // label7
-            // 
-            this.label7.Location = new System.Drawing.Point(5, 219);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(58, 23);
-            this.label7.TabIndex = 16;
-            this.label7.Text = "Teade";
-            this.label7.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // personalMsgFileLabel
             // 
-            this.personalMsgFileLabel.Location = new System.Drawing.Point(70, 138);
+            this.personalMsgFileLabel.Location = new System.Drawing.Point(10, 361);
             this.personalMsgFileLabel.Name = "personalMsgFileLabel";
             this.personalMsgFileLabel.Size = new System.Drawing.Size(146, 20);
             this.personalMsgFileLabel.TabIndex = 17;
@@ -114,17 +85,19 @@
             // 
             // personMsgLabel
             // 
+            this.personMsgLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.personMsgLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.personMsgLabel.ForeColor = System.Drawing.Color.Black;
-            this.personMsgLabel.Location = new System.Drawing.Point(70, 219);
+            this.personMsgLabel.Location = new System.Drawing.Point(356, 280);
             this.personMsgLabel.Name = "personMsgLabel";
             this.personMsgLabel.Size = new System.Drawing.Size(178, 51);
             this.personMsgLabel.TabIndex = 1;
+            this.personMsgLabel.Text = "Teade";
             this.personMsgLabel.Visible = false;
             // 
             // label5
             // 
-            this.label5.Location = new System.Drawing.Point(6, 137);
+            this.label5.Location = new System.Drawing.Point(6, 336);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(58, 20);
             this.label5.TabIndex = 15;
@@ -136,7 +109,7 @@
             this.personalMsgMissingRedChk.AutoSize = true;
             this.personalMsgMissingRedChk.Checked = true;
             this.personalMsgMissingRedChk.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.personalMsgMissingRedChk.Location = new System.Drawing.Point(70, 168);
+            this.personalMsgMissingRedChk.Location = new System.Drawing.Point(70, 334);
             this.personalMsgMissingRedChk.Name = "personalMsgMissingRedChk";
             this.personalMsgMissingRedChk.Size = new System.Drawing.Size(149, 17);
             this.personalMsgMissingRedChk.TabIndex = 18;
@@ -149,9 +122,9 @@
             this.startDataCollectionPanel.Controls.Add(this.startDataCollectionBtn);
             this.startDataCollectionPanel.Controls.Add(this.loggerErrorLabel);
             this.startDataCollectionPanel.Controls.Add(this.label6);
-            this.startDataCollectionPanel.Location = new System.Drawing.Point(7, 20);
+            this.startDataCollectionPanel.Location = new System.Drawing.Point(6, 162);
             this.startDataCollectionPanel.Name = "startDataCollectionPanel";
-            this.startDataCollectionPanel.Size = new System.Drawing.Size(258, 108);
+            this.startDataCollectionPanel.Size = new System.Drawing.Size(318, 155);
             this.startDataCollectionPanel.TabIndex = 8;
             // 
             // startDataCollectionBtn
@@ -159,9 +132,9 @@
             this.startDataCollectionBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.startDataCollectionBtn.Enabled = false;
-            this.startDataCollectionBtn.Location = new System.Drawing.Point(9, 69);
+            this.startDataCollectionBtn.Location = new System.Drawing.Point(9, 116);
             this.startDataCollectionBtn.Name = "startDataCollectionBtn";
-            this.startDataCollectionBtn.Size = new System.Drawing.Size(244, 34);
+            this.startDataCollectionBtn.Size = new System.Drawing.Size(304, 34);
             this.startDataCollectionBtn.TabIndex = 7;
             this.startDataCollectionBtn.Text = "Kogu ID-kaarte";
             this.startDataCollectionBtn.UseVisualStyleBackColor = true;
@@ -193,9 +166,9 @@
             this.dataCollectionProgressPanel.Controls.Add(this.stopDataCollectionBtn);
             this.dataCollectionProgressPanel.Controls.Add(this.loggerCountLabel);
             this.dataCollectionProgressPanel.Controls.Add(this.label1);
-            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 19);
+            this.dataCollectionProgressPanel.Location = new System.Drawing.Point(6, 6);
             this.dataCollectionProgressPanel.Name = "dataCollectionProgressPanel";
-            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(253, 108);
+            this.dataCollectionProgressPanel.Size = new System.Drawing.Size(318, 155);
             this.dataCollectionProgressPanel.TabIndex = 4;
             this.dataCollectionProgressPanel.Visible = false;
             // 
@@ -206,18 +179,7 @@
             this.loggerOutputLabel.Size = new System.Drawing.Size(235, 17);
             this.loggerOutputLabel.TabIndex = 8;
             this.loggerOutputLabel.Text = "loggerOutputLabel";
-            // 
-            // stopDataCollectionBtn
-            // 
-            this.stopDataCollectionBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.stopDataCollectionBtn.Location = new System.Drawing.Point(9, 69);
-            this.stopDataCollectionBtn.Name = "stopDataCollectionBtn";
-            this.stopDataCollectionBtn.Size = new System.Drawing.Size(239, 34);
-            this.stopDataCollectionBtn.TabIndex = 7;
-            this.stopDataCollectionBtn.Text = "Lõpeta kogumine";
-            this.stopDataCollectionBtn.UseVisualStyleBackColor = true;
-            this.stopDataCollectionBtn.Click += new System.EventHandler(this.stopDataCollectionBtn_Click);
+            
             // 
             // loggerCountLabel
             // 
@@ -239,7 +201,7 @@
             // 
             // clearPersonMsgFile
             // 
-            this.clearPersonMsgFile.Location = new System.Drawing.Point(222, 134);
+            this.clearPersonMsgFile.Location = new System.Drawing.Point(157, 358);
             this.clearPersonMsgFile.Name = "clearPersonMsgFile";
             this.clearPersonMsgFile.Size = new System.Drawing.Size(26, 26);
             this.clearPersonMsgFile.TabIndex = 13;
@@ -250,31 +212,14 @@
             // 
             // personNameLabel
             // 
+            this.personNameLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.personNameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.personNameLabel.Location = new System.Drawing.Point(70, 191);
+            this.personNameLabel.Location = new System.Drawing.Point(356, 250);
             this.personNameLabel.Name = "personNameLabel";
             this.personNameLabel.Size = new System.Drawing.Size(178, 24);
             this.personNameLabel.TabIndex = 0;
+            this.personNameLabel.Text = "Nimi";
             this.personNameLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // openPersonMsgFileBtn
-            // 
-            this.openPersonMsgFileBtn.Location = new System.Drawing.Point(70, 132);
-            this.openPersonMsgFileBtn.Name = "openPersonMsgFileBtn";
-            this.openPersonMsgFileBtn.Size = new System.Drawing.Size(179, 30);
-            this.openPersonMsgFileBtn.TabIndex = 8;
-            this.openPersonMsgFileBtn.Text = "Ava individuaalteate tabel";
-            this.openPersonMsgFileBtn.UseVisualStyleBackColor = true;
-            this.openPersonMsgFileBtn.Click += new System.EventHandler(this.openPersonMsgFileBtn_Click);
-            // 
-            // label2
-            // 
-            this.label2.Location = new System.Drawing.Point(2, 196);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(58, 23);
-            this.label2.TabIndex = 14;
-            this.label2.Text = "Nimi";
-            this.label2.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // timeFilterEnabledCheckbox
             // 
@@ -348,7 +293,7 @@
             this.timeFilterGroupBox.Controls.Add(this.label4);
             this.timeFilterGroupBox.Controls.Add(this.label3);
             this.timeFilterGroupBox.Enabled = false;
-            this.timeFilterGroupBox.Location = new System.Drawing.Point(12, 150);
+            this.timeFilterGroupBox.Location = new System.Drawing.Point(8, 81);
             this.timeFilterGroupBox.Name = "timeFilterGroupBox";
             this.timeFilterGroupBox.Size = new System.Drawing.Size(259, 120);
             this.timeFilterGroupBox.TabIndex = 5;
@@ -361,7 +306,7 @@
             this.reportCreatorGroupBox.Controls.Add(this.generatePersrepBtn);
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionPersrep);
             this.reportCreatorGroupBox.Enabled = false;
-            this.reportCreatorGroupBox.Location = new System.Drawing.Point(10, 276);
+            this.reportCreatorGroupBox.Location = new System.Drawing.Point(6, 6);
             this.reportCreatorGroupBox.Name = "reportCreatorGroupBox";
             this.reportCreatorGroupBox.Size = new System.Drawing.Size(261, 72);
             this.reportCreatorGroupBox.TabIndex = 6;
@@ -397,7 +342,7 @@
             this.saveGroupBox.Controls.Add(this.saveReportButton);
             this.saveGroupBox.Controls.Add(this.progressStatusLabel);
             this.saveGroupBox.Enabled = false;
-            this.saveGroupBox.Location = new System.Drawing.Point(11, 354);
+            this.saveGroupBox.Location = new System.Drawing.Point(7, 201);
             this.saveGroupBox.Name = "saveGroupBox";
             this.saveGroupBox.Size = new System.Drawing.Size(260, 63);
             this.saveGroupBox.TabIndex = 8;
@@ -417,40 +362,22 @@
             // 
             // progressStatusLabel
             // 
+            this.progressStatusLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             this.progressStatusLabel.Location = new System.Drawing.Point(7, 16);
             this.progressStatusLabel.Name = "progressStatusLabel";
             this.progressStatusLabel.Size = new System.Drawing.Size(161, 41);
             this.progressStatusLabel.TabIndex = 2;
             // 
-            // label8
-            // 
-            this.label8.Location = new System.Drawing.Point(291, 367);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(244, 53);
-            this.label8.TabIndex = 13;
-            this.label8.Text = "Programm on koostatud Eesti Kaitseliidu Tartu maleva asutusesiseseks kasutamiseks" +
-    ".\r\nTugi: johannes.kadak+ekl@gmail.com\r\n";
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.databaseConnectionErrorMsg);
             this.groupBox2.Controls.Add(this.openDatabaseButton);
-            this.groupBox2.Location = new System.Drawing.Point(10, 12);
+            this.groupBox2.Location = new System.Drawing.Point(12, 6);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(261, 132);
+            this.groupBox2.Size = new System.Drawing.Size(338, 84);
             this.groupBox2.TabIndex = 14;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Andmebaasiühendus";
-            // 
-            // openDatabaseButton
-            // 
-            this.openDatabaseButton.Location = new System.Drawing.Point(10, 25);
-            this.openDatabaseButton.Name = "openDatabaseButton";
-            this.openDatabaseButton.Size = new System.Drawing.Size(245, 30);
-            this.openDatabaseButton.TabIndex = 0;
-            this.openDatabaseButton.Text = "Ava andmebaas (.accdb)";
-            this.openDatabaseButton.UseVisualStyleBackColor = true;
-            this.openDatabaseButton.Click += new System.EventHandler(this.openDatabaseButton_Click);
             // 
             // databaseConnectionErrorMsg
             // 
@@ -463,25 +390,71 @@
             this.databaseConnectionErrorMsg.Text = "Andmebaasi laadimine ei õnnestunud.";
             this.databaseConnectionErrorMsg.Visible = false;
             // 
+            // openDatabaseButton
+            // 
+            this.openDatabaseButton.Location = new System.Drawing.Point(10, 25);
+            this.openDatabaseButton.Name = "openDatabaseButton";
+            this.openDatabaseButton.Size = new System.Drawing.Size(245, 30);
+            this.openDatabaseButton.TabIndex = 0;
+            this.openDatabaseButton.Text = "Ava andmebaas (.accdb)";
+            this.openDatabaseButton.UseVisualStyleBackColor = true;
+            this.openDatabaseButton.Click += new System.EventHandler(this.openDatabaseButton_Click);
+            // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(12, 96);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(338, 415);
+            this.tabControl1.TabIndex = 19;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage1.Controls.Add(this.startDataCollectionPanel);
+            this.tabPage1.Controls.Add(this.dataCollectionProgressPanel);
+            this.tabPage1.Controls.Add(this.personalMsgMissingRedChk);
+            this.tabPage1.Controls.Add(this.clearPersonMsgFile);
+            this.tabPage1.Controls.Add(this.label5);
+            this.tabPage1.Controls.Add(this.personalMsgFileLabel);
+            this.tabPage1.Controls.Add(this.openPersonMsgFileBtn);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(330, 389);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Kogumine";
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage2.Controls.Add(this.reportCreatorGroupBox);
+            this.tabPage2.Controls.Add(this.timeFilterGroupBox);
+            this.tabPage2.Controls.Add(this.saveGroupBox);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(330, 389);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Rapordid";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 424);
+            this.ClientSize = new System.Drawing.Size(704, 579);
+            this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.personMsgLabel);
             this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.saveGroupBox);
-            this.Controls.Add(this.reportCreatorGroupBox);
-            this.Controls.Add(this.timeFilterGroupBox);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.personNameLabel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
             this.Text = "ID-kaardi lugeja ja PERSREPi koostaja 1.9";
             this.Load += new System.EventHandler(this.Form1_Load);
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             this.startDataCollectionPanel.ResumeLayout(false);
             this.startDataCollectionPanel.PerformLayout();
             this.dataCollectionProgressPanel.ResumeLayout(false);
@@ -493,12 +466,15 @@
             this.saveGroupBox.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Panel dataCollectionProgressPanel;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label loggerCountLabel;
@@ -525,15 +501,15 @@
         private System.Windows.Forms.Label personMsgLabel;
         private System.Windows.Forms.Button clearPersonMsgFile;
         private System.Windows.Forms.Button openPersonMsgFileBtn;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label personalMsgFileLabel;
-        private System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckBox personalMsgMissingRedChk;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button openDatabaseButton;
         private System.Windows.Forms.Label databaseConnectionErrorMsg;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
     }
 }
 

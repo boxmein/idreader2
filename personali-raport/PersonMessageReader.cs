@@ -1,33 +1,67 @@
-﻿using System.IO;
+﻿using System;
+using System.Data.OleDb;
+using System.Diagnostics;
+using System.IO;
+
+
+/*
+    ==== MS Access Table Structure ====
+
+    This class reads data from Access using a SELECT query.
+
+    This is how to create the expected table structure in Access:
+
+    Access: 
+    Create Table >
+        Name: Isikuteated
+        Columns:
+            - ID            created automatically (integer primary key)
+            - Isikukood     Text
+            - Teade         Memo
+*/
 
 namespace personali_raport
 {
     public class PersonMessageReader
     {
-        string fileName;
-        public PersonMessageReader(string fileName)
+        const string TABLE_NAME = "Isikuteated";
+        const string COLUMN_NAME = "Teade";
+        const string TABLE_QUERY = "SELECT " + COLUMN_NAME + " FROM " + TABLE_NAME + " WHERE Isikukood = ?;";
+        private OleDbConnection databaseConnection;
+
+        public PersonMessageReader(OleDbConnection oleDb)
         {
-            this.fileName = fileName;
+            Debug.Assert(oleDb != null, "OleDbConnection was null in PersonMessageReader constructor");
+            databaseConnection = oleDb;
         }
 
         /// <summary>
-        /// Read the person's personal message if available. Returns null if not found in the list.
+        /// Read the person's personal message if available. Returns null if not found in the database.
         /// </summary>
         /// <param name="idCode">The person's ID code, as a string. Used to match against the FIRST column.</param>
         /// <returns>The person's message, as a string.</returns>
         public string GetPersonMessage(string idCode)
         {
-            foreach (var line in File.ReadLines(fileName))
-            {
-                var lineSplit = line.Split(new[] { ';' }, 2);
-                
-                if (lineSplit.Length > 1 && idCode == lineSplit[0])
-                {
-                    return lineSplit[1];
-                }
+            var cursor = databaseConnection.CreateCommand();
+            cursor.CommandText = TABLE_QUERY;
+            cursor.Parameters.Add(new OleDbParameter("Isikukood", OleDbType.VarChar, 12));
+            cursor.Parameters[0].Value = idCode;
+            try {
+                cursor.Prepare();
+                string message = (string)cursor.ExecuteScalar();
+                Debug.Print("Person Message fetch: " + message);
+                return message;
             }
-
-            return null;
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+                return "(Midagi läks valesti sõnumi laadimisel.)";
+            }
+            catch (OleDbException ex)
+            {
+                Debug.Print(ex.ToString());
+                return "(Midagi läks valesti sõnumi laadimisel.)";
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ namespace personali_raport
         /// Contains the person's ID code. This is necessary to fetch any other
         /// kind of data from the Excel spreadsheet.
         /// </summary>
-        public long idCode { get; set; }
+        public string idCode { get; set; }
         /// <summary>
         /// Contains any kind of user data from the Excel personnel list.
         /// Data fields may include:

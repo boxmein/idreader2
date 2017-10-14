@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace personali_raport
 {
-    interface IReportWriter
+    public interface IReportWriter
     {
         bool WriteReport(List<Person> personnel);
         bool SaveFile(string fileName);
