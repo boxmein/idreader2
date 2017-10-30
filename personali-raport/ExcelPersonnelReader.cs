@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
+using System.Runtime.InteropServices;
 using Microsoft.Office.Interop.Excel;
 
 namespace personali_raport
@@ -17,9 +17,6 @@ namespace personali_raport
         /// </summary>
         const char ID_CODE_COLUMN = 'N';
 
-        static readonly string GROUP_DATA_NAME = "group";
-        static readonly string GROUP_ROWNUM_DATA_NAME = "group#";
-
         const char FIRST_PERSONAL_COLUMN = 'A';
         const int MAX_PERSONAL_DATA = 20;
         /// <summary>
@@ -31,6 +28,7 @@ namespace personali_raport
         /// </summary>
         Dictionary<string, char> personProperties;
 
+        Workbooks workbooks;
         Worksheet worksheet;
         Workbook workbook;
         Application excelApp;
@@ -46,7 +44,7 @@ namespace personali_raport
         public ExcelPersonnelReader(string personnelReport)
         {
             excelApp = new Application();
-
+            workbooks = excelApp.Workbooks;
             /*
             excelApp.Visible = true;
             excelApp.UserControl = true;
@@ -54,7 +52,7 @@ namespace personali_raport
 
             try
             {
-                workbook = excelApp.Workbooks.Open(personnelReport);
+                workbook = workbooks.Open(personnelReport);
                 worksheet = excelApp.ActiveSheet;
 
                 personProperties = new Dictionary<string, char>();
@@ -66,12 +64,22 @@ namespace personali_raport
             }
         }
 
-        /* 
-        ~PersonnelReader()
+        public void Dispose()
         {
-            excelApp.Quit();
-        } 
-        */
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (excelApp != null)
+                {
+                    CloseExcel();
+                }
+            }
+        }
 
         /// <summary>
         /// Go over the opened Excel table and find all columns by walking right from the first "personal property".
@@ -142,7 +150,9 @@ namespace personali_raport
 
             for (int i = personRow; i > 0; i--)
             {
-                bold = worksheet.Cells[i, "A"].Font.Bold;
+                var r = worksheet.Cells[i, "A"];
+                var font = r.Font;
+                bold = font.Bold;
                 Debug.Print("A{0}: style is {1}", i, bold);
 
                 if (bold)
@@ -167,7 +177,9 @@ namespace personali_raport
             {
                 throw new ArgumentOutOfRangeException("row", "Parameter 'row' cannot be less than 1");
             }
-            return (string) worksheet.Cells[row, column].FormulaLocal;
+
+            var r = worksheet.Cells[row, column];
+            return (string) r.FormulaLocal;
         }
 
         /// <summary>
@@ -183,7 +195,8 @@ namespace personali_raport
             {
                 throw new ArgumentOutOfRangeException("row", "Parameter 'row' cannot be less than 1");
             }
-            return (string)worksheet.Cells[row, column.ToString()].FormulaLocal;
+            var r = worksheet.Cells[row, column.ToString()];
+            return (string) r.FormulaLocal;
         }
 
         /// <summary>
@@ -193,8 +206,7 @@ namespace personali_raport
         /// <returns>A person with populated "data" object, or null if not found.</returns>
         public Person ReadPersonalData(string idCode)
         {
-            Person person = new Person();
-            person.idCode = idCode;
+            Person person = new Person() { idCode = idCode };
 
             int personRow = FindPersonRow(idCode);
 
@@ -226,7 +238,21 @@ namespace personali_raport
         
         public void CloseExcel()
         {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Marshal.FinalReleaseComObject(worksheet);
+
+            workbook.Close(Type.Missing, Type.Missing, Type.Missing);
+            Marshal.FinalReleaseComObject(workbook);
+            
             excelApp.Quit();
+
+            Marshal.FinalReleaseComObject(excelApp);
+
+            excelApp = null;
+            workbook = null;
+            worksheet = null;
         }
     }
 }

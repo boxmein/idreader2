@@ -55,12 +55,12 @@ namespace personali_raport
             catch (InvalidOperationException ex)
             {
                 Debug.Print(ex.ToString());
-                return "(Midagi läks valesti sõnumi laadimisel.)";
+                return String.Format("(Midagi läks valesti sõnumi laadimisel.)\n{0}", ex.Message);
             }
             catch (OleDbException ex)
             {
                 Debug.Print(ex.ToString());
-                return "(Midagi läks valesti sõnumi laadimisel.)";
+                return String.Format("(Midagi läks valesti sõnumi laadimisel.)\n{0}", ex.Message);
             }
         }
     }

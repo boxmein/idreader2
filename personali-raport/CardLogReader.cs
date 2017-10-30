@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace personali_raport
 {
@@ -18,8 +19,14 @@ namespace personali_raport
             datetime = new DateTime();
         }
     }
-    public class CardLogReader
+    public class CardLogReader : ILogReader
     {
+        private string[] files;
+        public CardLogReader(string[] dataFiles)
+        {
+            files = dataFiles;
+        }
+
         const string DATETIME_FORMAT = "yyyy-M-d H:mm:ss zz00";
         CardLogEntry ParseRow(string row)
         {
@@ -81,5 +88,13 @@ namespace personali_raport
             }
         }
 
+        public IEnumerable<CardLogEntry> ReadAllCardsInTimespan(DateTime start, DateTime end)
+        {
+            return LoadAllFiles(files).SelectMany(x => x).Where(entry =>
+            {
+                return entry.datetime >= start &&
+                       entry.datetime <= end;
+            });
+        }
     }
 }

@@ -11,16 +11,15 @@ using System.Data.OleDb;
 
 namespace personali_raport
 {
-    enum ReporterState {
-            OpenPersonnelList = 0,
-            SelectDataFile = 1,
-            SelectDateRange = 2,
-            OpenReportTemplate = 3,
-            LoadingData = 4,
-            SaveReport = 5,
-            Done = 6
-    };
 
+    /// <summary>
+    /// The entry point form to the application.
+    /// Allows the user to open the IDCollectorForm to collect ID card logs, 
+    /// open the Access database the rest of the app depends on, and create 
+    /// reports.
+    /// Additionally, maintains the Access database connection, and instances of
+    /// IPersonnelReader & IReportWriter.
+    /// </summary>
     public partial class Form1 : Form
     {
         /// <summary>
@@ -32,6 +31,11 @@ namespace personali_raport
         /// Reader for the ID Collector to get personal messages from the database.
         /// </summary>
         PersonMessageReader pmReader;
+
+        /// <summary>
+        /// A reader that fetches personal data from the Excel or Access database.
+        /// </summary>
+        IPersonnelReader personnelReader;
 
         /// <summary>
         /// The user-provided settings to compose the report from.
@@ -68,10 +72,25 @@ namespace personali_raport
         /// <seealso cref="ReportSettings"/>
         public Form1()
         {
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             settings = new ReportSettings();
             InitializeComponent();
         }
-        
+
+        /// <summary>
+        /// Callback to call when the process exits.
+        /// </summary>
+        private void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            Debug.Print("Process exiting. Taking idreader2, and Access connection with.");
+            
+            // Close the database connection
+            if (conn.State == System.Data.ConnectionState.Open)
+            {
+                conn.Close();
+            }
+        }
+
         /// <summary>
         /// Initializes the ID card reader:
         /// Fills in the report settings with their default values.
@@ -89,9 +108,6 @@ namespace personali_raport
             settings.personnelFileName = null;
             settings.reportFileName = null;
             settings.reportTemplate = null;
-
-            startDataCollectionPanel.Visible = true;
-            dataCollectionProgressPanel.Visible = false;
 
             // Initialize time filter settings
             if (timeFilterEnabledCheckbox.Checked)
@@ -130,11 +146,8 @@ namespace personali_raport
         /// </summary>
         private void UpdateValidity()
         {
-            if (settings.dataFiles != null && settings.dataFiles.Length > 0 &&
-                settings.dataFiles.All(dataFile => File.Exists(dataFile)) &&
-                settings.startOfReport != null &&
+            if (settings.startOfReport != null &&
                 settings.endOfReport != null &&
-                settings.personnelFileName != null && File.Exists(settings.personnelFileName) &&
                 settings.reportTemplate != null && File.Exists(settings.reportTemplate))
             {
                 generatePersrepBtn.Enabled = true;
@@ -168,49 +181,41 @@ namespace personali_raport
         /// <seealso cref="AttendanceReportWriter"/>
         private void GenerateReport()
         {
-            ExcelPersonnelReader personnelReader = new ExcelPersonnelReader(settings.personnelFileName);
-            CardLogReader cardLogReader = new CardLogReader();
+            Debug.Assert(conn != null, "Database connection was null in GenerateReport()");
+            Debug.Assert(personnelReader != null, "personnel reader not initialized in generateReport()");
+            ILogReader cardLogReader = new AccessLogReader(conn);
             List<Person> logEntries = new List<Person>();
             List<Person> unknownPeople = new List<Person>();
 
             int entriesNotRecognized = 0;
-            
-            foreach (IEnumerable<CardLogEntry> rows in cardLogReader.LoadAllFiles(settings.dataFiles))
+            foreach (CardLogEntry row in cardLogReader.ReadAllCardsInTimespan(settings.startOfReport, settings.endOfReport))
             {
-                foreach (CardLogEntry row in rows)
+
+                if (row == null)
                 {
-
-                    if (row == null)
-                    {
-                        Debug.Print("Did not receive a valid row in GenerateReport() :(");
-                        continue;
-                    }
-                    
-                    if (settings.startOfReport < row.datetime &&
-                        settings.endOfReport > row.datetime)
-                    {
-                        Debug.Print("Processing person with ID code {0}", row.idCode);
-
-                        // null if no person was found
-                        Person foundPerson = personnelReader.ReadPersonalData(row.idCode);
-
-                        if (foundPerson == null)
-                        {
-                            Debug.Print("Unknown person, adding to unknown list", row.idCode);
-
-                            var p = new Person() { idCode = row.idCode };
-                            p.data["Eesnimi"] = row.firstName;
-                            p.data["Perekonnanimi"] = row.lastName;
-                            unknownPeople.Add(p);
-
-                            entriesNotRecognized++;
-                            continue;
-                        }
-
-                        foundPerson.signedInOn = row.datetime;
-                        logEntries.Add(foundPerson);
-                    }
+                    Debug.Print("Did not receive a valid row in GenerateReport() :(");
+                    continue;
                 }
+                Debug.Print("Processing person with ID code {0}", row.idCode.ToString());
+
+                // null if no person was found
+                Person foundPerson = personnelReader.ReadPersonalData(row.idCode.ToString());
+
+                if (foundPerson == null)
+                {
+                    Debug.Print("Unknown person, adding to unknown list", row.idCode);
+
+                    var p = new Person() { idCode = row.idCode.ToString() };
+                    p.data["Eesnimi"] = row.firstName;
+                    p.data["Perekonnanimi"] = row.lastName;
+                    unknownPeople.Add(p);
+
+                    entriesNotRecognized++;
+                    continue;
+                }
+
+                foundPerson.signedInOn = row.datetime;
+                logEntries.Add(foundPerson);
             }
 
             progressStatusLabel.Text = String.Format("Edukalt loetud {0} kirjet.", logEntries.Count);
@@ -232,13 +237,8 @@ namespace personali_raport
             } else if (settings.reportType == ReportType.ATTENDANCE)
             {
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
-                
             } 
-
-
-            personnelReader.CloseExcel();
-            personnelReader = null;
-
+            
             reportWriter.WriteReport(logEntries);
             if (unknownPeople.Count > 0)
             {
@@ -274,9 +274,11 @@ namespace personali_raport
         private void saveReportButton_Click(object sender, EventArgs e)
         {
 
-            var sfd = new SaveFileDialog();
-            sfd.AddExtension = true;
-            sfd.CheckPathExists = true;
+            var sfd = new SaveFileDialog() {
+                AddExtension = true,
+                CheckPathExists = true,
+                Filter = "Excel spreadsheet|*.xlsx"
+            };
 
             var datetime = settings.startOfReport;
 
@@ -287,7 +289,6 @@ namespace personali_raport
             }
 
             sfd.FileName = "raport-" + datetime.ToString("dd.MM.yyyy-HH.mm.ss") + ".xlsx";
-            sfd.Filter = "Excel spreadsheet|*.xlsx";
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
@@ -326,16 +327,7 @@ namespace personali_raport
             }
         }
 
-        private void clearPersonMsgFile_Click(object sender, EventArgs e)
-        {
-            openPersonMsgFileBtn.Visible = true;
-            clearPersonMsgFile.Visible = false;
 
-            personalMsgFileLabel.Text = "";
-            personalMsgFileLabel.Visible = false;
-
-            personMsgLabel.Visible = false;
-        }
         private void openDatabaseButton_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -348,20 +340,25 @@ namespace personali_raport
                     conn.Open();
                     writer = new AccessWriter(conn);
                     pmReader = new PersonMessageReader(conn);
+                    personnelReader = new AccessPersonnelReader(conn);
 
                     Debug.Print("Database connected to: " + ofd.FileName);
                     databaseConnectionErrorMsg.Visible = false;
                     openDatabaseButton.Enabled = false;
+                    startDataCollectionBtn.Enabled = true;
+                    tabControl1.Enabled = true;
                 } catch (InvalidOperationException ex) {
                     Debug.Print(ex.ToString());
                     openDatabaseButton.Enabled = false;
                     databaseConnectionErrorMsg.Visible = true;
                     databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+                    tabControl1.Enabled = false;
                 } catch (OleDbException ex)
                 {
                     Debug.Print(ex.ToString());
                     databaseConnectionErrorMsg.Visible = true;
-                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei õnnestunud.";
+                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+                    tabControl1.Enabled = false;
                 }
             }
         }
@@ -370,11 +367,28 @@ namespace personali_raport
         {
             Debug.Assert(writer != null, "Database writer was null during start data collection");
             Debug.Assert(pmReader != null, "PersonMessageReader was null during start data collection");
-            idCollectorForm = new IDCollectorForm(writer, pmReader);
-            idCollectorForm.showRedWhenNoMessage = personalMsgMissingRedChk.Checked;
+            Debug.Assert(personnelReader != null, "PersonnelReader was null during start data collection");
+            idCollectorForm = new IDCollectorForm(writer, pmReader, personnelReader);
             idCollectorForm.Show();
         }
         #endregion
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var ofd = new OpenFileDialog() { Filter = "Excel worksheets|*.xls;*.xlsx" };
+
+            if (ofd.ShowDialog() == DialogResult.OK && !ofd.FileName.Equals(""))
+            {
+                settings.reportTemplate = ofd.FileName;
+                button1.Enabled = false;
+                UpdateValidity();
+            }
+        }
+
+        private void tabPage2_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
 

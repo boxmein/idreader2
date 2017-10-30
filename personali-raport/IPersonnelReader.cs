@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace personali_raport
 {
-    public interface IPersonnelReader
+    public interface IPersonnelReader : IDisposable
     {
         Person ReadPersonalData(string idCode);
     }

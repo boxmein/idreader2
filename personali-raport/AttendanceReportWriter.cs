@@ -34,6 +34,10 @@ namespace personali_raport
         public AttendanceReportWriter(string fileName)
         {
             excelApp = new Application();
+
+            /// NOTE: COMExceptions here can be caused from a wrong installation of Excel.
+            /// Install a clean Office 2010 and uninstall everything else, then reboot to fix.
+            /// Also, don't use Office 16.0 Object Library.
             workbook = excelApp.Workbooks.Open(fileName);
             worksheet = excelApp.ActiveSheet;
         }

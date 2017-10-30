@@ -69,7 +69,13 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>keyfile.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -85,6 +91,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AccessLogReader.cs" />
     <Compile Include="AccessPersonnelReader.cs" />
     <Compile Include="AccessWriter.cs" />
     <Compile Include="AttendanceReportWriter.cs" />
@@ -95,6 +102,7 @@
     <Compile Include="IDCollectorForm.Designer.cs">
       <DependentUpon>IDCollectorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ILogReader.cs" />
     <Compile Include="IPersonnelReader.cs" />
     <Compile Include="IReportWriter.cs" />
     <Compile Include="PersonMessageReader.cs" />
@@ -136,6 +144,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="keyfile.pfx" />
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

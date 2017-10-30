@@ -46,7 +46,7 @@ namespace personali_raport
         const string ADDRESS_FIELD = "Elukoht";
         const string PHONE_FIELD = "Telefon";
 
-        const string TABLE_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE " + ID_CODE_FIELD + " = ?;";
+        const string TABLE_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE " + ID_CODE_FIELD + " = @idCode;";
 
 
         private OleDbConnection databaseConnection;
@@ -56,39 +56,73 @@ namespace personali_raport
             Debug.Assert(oleDb != null, "OleDbConnection was null in AccessPersonnelReader constructor");
             databaseConnection = oleDb;
         }
+        ///
+        /// Read personal data by executing a SQL query against an Access database.
+        /// Expects data to be in a table in the format specified in AccessPersonnelReader.cs
+        /// <param name="idCode">The person's ID code (Isikukood).</param>
+        /// <returns> a Person object filled with personal data.</returns>
         Person IPersonnelReader.ReadPersonalData(string idCode)
         {
-            Person person = new Person();
-            person.idCode = idCode;
+            Person person = new Person() { idCode = idCode };
+            Debug.Print("Looking for ID code {0}", idCode);
 
             var cursor = databaseConnection.CreateCommand();
             cursor.CommandText = TABLE_QUERY;
-            cursor.Parameters.Add(new OleDbParameter("Isikukood", OleDbType.VarChar, 12));
+            cursor.Parameters.Add(new OleDbParameter("@isikukood", OleDbType.VarChar, 12));
             cursor.Parameters[0].Value = idCode;
             try
             {
                 cursor.Prepare();
-                OleDbDataReader reader = cursor.ExecuteReader();
-
-                if (reader.HasRows)
+                using (OleDbDataReader reader = cursor.ExecuteReader())
                 {
+                    if (reader.HasRows) {
+                        reader.Read();
+                        string firstName = reader.GetString(reader.GetOrdinal(FIRST_NAME_FIELD));
+                        string lastName = reader.GetString(reader.GetOrdinal(LAST_NAME_FIELD));
+                        string kkv = reader.GetString(reader.GetOrdinal(KKV_FIELD)); // Kaitseväekohuslane / reservohvitser
+                        string rank = reader.GetString(reader.GetOrdinal(RANK_FIELD)); // Auaste
+                        string position = reader.GetString(reader.GetOrdinal(POSITION_FIELD)); // Ametikoht
+                        string group = reader.GetString(reader.GetOrdinal(GROUP_FIELD)); // Rühm
+                        
+                        Debug.Print("AccessPersonnelReader fetch: " + idCode);
+                        person.data.Add("group", group);
+                        person.data.Add("Eesnimi", firstName);
+                        person.data.Add("Perekonnanimi", lastName);
 
+                        return person;
+                    }
+                    Debug.Print("AccessPersonnelReader executed: no row found");
+                    return null;
                 }
-                Debug.Print("AccessPersonnelReader fetch: " + idCode);
-                return message;
             }
             catch (InvalidOperationException ex)
             {
                 Debug.Print(ex.ToString());
-                return "(Midagi läks valesti sõnumi laadimisel.)";
+                return null;
             }
             catch (OleDbException ex)
             {
                 Debug.Print(ex.ToString());
-                return "(Midagi läks valesti sõnumi laadimisel.)";
+                return null;
             }
+        }
 
-            return person;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (databaseConnection != null)
+                {
+                    databaseConnection.Dispose();
+                    databaseConnection = null;
+                }
+            }
         }
     }
 }

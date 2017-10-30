@@ -4,11 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace personali_raport
 {
     public partial class IDCollectorForm : Form
     {
+
+        CultureInfo culture = new CultureInfo("et-EE");
         /// <summary>
         /// Validates the ID code input box, as a 11 number long string with optional
         /// preceding and trailing whitespace (which will be trimmed anyway!)
@@ -47,9 +50,14 @@ namespace personali_raport
         /// </summary>
         PersonMessageReader pmReader;
 
+        /// <summary>
+        /// An object that fetches general information for the scanned person.
+        /// </summary>
+        IPersonnelReader personnelReader;
+
         private AccessWriter writer;
 
-        public IDCollectorForm(AccessWriter w, PersonMessageReader reader)
+        public IDCollectorForm(AccessWriter w, PersonMessageReader reader, IPersonnelReader personnelReader)
         {
             Debug.Assert(w != null, "AccessWriter instance was null in IDCollectorForm constructor");
             InitializeComponent();
@@ -57,6 +65,7 @@ namespace personali_raport
             this.FormClosed += new FormClosedEventHandler(windowWasHidden);
             writer = w;
             pmReader = reader;
+            this.personnelReader = personnelReader;
         }
 
         public bool showRedWhenNoMessage = false;
@@ -326,6 +335,10 @@ namespace personali_raport
             Debug.Print("Last name: {0}", lastName);
             Debug.Print("ID code: {0}", match);
 
+            // Parse first name & last name into title case
+            firstName = firstName ?? culture.TextInfo.ToTitleCase(firstName);
+            lastName = lastName ?? culture.TextInfo.ToTitleCase(lastName);
+
             if (firstName != null &&
                 lastName != null &&
                 idCode != null)
@@ -367,6 +380,17 @@ namespace personali_raport
         {
             Debug.Assert(textBox1.Text != null, "Tried to save handwritten ID without textbox text");
             string idCode = textBox1.Text.Trim();
+
+            var person = personnelReader.ReadPersonalData(idCode);
+
+            if (person != null)
+            {
+                string firstName, lastName;
+                person.data.TryGetValue("Eesnimi", out firstName);
+                person.data.TryGetValue("Perekonnanimi", out lastName);
+                Debug.Print("Manual Entry: {0}", idCode);
+                logPerson(firstName, lastName, idCode);
+            }
         }
     }
 }
