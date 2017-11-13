@@ -17,6 +17,7 @@ namespace personali_raport
 
         const string FIRST_NAME = "Eesnimi";
         const string LAST_NAME = "Perekonnanimi";
+        const string PLATOON = "Ryhm";
         
         Worksheet worksheet;
         Workbook workbook;
@@ -56,7 +57,7 @@ namespace personali_raport
             foreach (var person in personnel)
             {
                 SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
-                SetValueToCell(currentRow, RANK_COL, person.data["group"]);
+                SetValueToCell(currentRow, RANK_COL, person.data[PLATOON]);
                 currentRow += 1;
             }
             return true;

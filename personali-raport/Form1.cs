@@ -63,6 +63,14 @@ namespace personali_raport
         /// </summary>
         OleDbConnection conn;
 
+        /// <summary>
+        /// Stores the settings in an INI file.
+        /// </summary>
+        IniFile storedSettings;
+
+        string storedPersrepTemplate;
+        string storedAttendanceTemplate;
+
         bool hasIDReaderBackend = false;
 
         /// <summary>
@@ -105,6 +113,29 @@ namespace personali_raport
         {
             // Initialize settings
             settings.reportType = ReportType.PERSREP;
+
+            storedSettings = new IniFile();
+
+            // Load Access DB from the INI file if possible
+            if (storedSettings.KeyExists("AccessDatabase"))
+            {
+                openDatabase(storedSettings.Read("AccessDatabase"));
+            }
+
+            if (storedSettings.KeyExists("PersrepTemplate"))
+            {
+                storedPersrepTemplate = storedSettings.Read("PersrepTemplate");
+                button1.Enabled = false;
+                // The default option is to generate a PERSREP, so enable generate button too.
+                generatePersrepBtn.Enabled = true;
+            }
+
+            if (storedSettings.KeyExists("AttendanceTemplate"))
+            {
+                storedPersrepTemplate = storedSettings.Read("AttendanceTemplate");
+                button1.Enabled = false;
+            }
+
             settings.personnelFileName = null;
             settings.reportFileName = null;
             settings.reportTemplate = null;
@@ -116,8 +147,8 @@ namespace personali_raport
                 settings.endOfReport = dataSelectionEndDate.Value;
             }
             else {
-                settings.startOfReport = DateTime.MinValue;
-                settings.endOfReport = DateTime.MaxValue;
+                dataSelectionStartDate.Value = DateTimePicker.MinimumDateTime; // DateTime.Today.Subtract(TimeSpan.FromDays(1));
+                dataSelectionEndDate.Value = DateTimePicker.MaximumDateTime; // DateTime.Today;
             }
 
             // If we have actually got a logger program, we can allow user to control it
@@ -186,6 +217,9 @@ namespace personali_raport
             ILogReader cardLogReader = new AccessLogReader(conn);
             List<Person> logEntries = new List<Person>();
             List<Person> unknownPeople = new List<Person>();
+
+            settings.startOfReport = dataSelectionStartDate.Value;
+            settings.endOfReport = dataSelectionEndDate.Value;
 
             int entriesNotRecognized = 0;
             foreach (CardLogEntry row in cardLogReader.ReadAllCardsInTimespan(settings.startOfReport, settings.endOfReport))
@@ -315,6 +349,15 @@ namespace personali_raport
             if (reportOptionPersrep.Checked)
             {
                 settings.reportType = ReportType.PERSREP;
+                if (storedPersrepTemplate != null)
+                {
+                    settings.reportTemplate = storedPersrepTemplate;
+                    button1.Enabled = false;
+                    generatePersrepBtn.Enabled = true;
+                } else
+                {
+                    button1.Enabled = true;
+                }
                 Debug.Print("Report type is now PERSREP");
             }
         }
@@ -323,6 +366,15 @@ namespace personali_raport
             if (reportOptionAttendance.Checked)
             {
                 settings.reportType = ReportType.ATTENDANCE;
+                if (storedAttendanceTemplate != null)
+                {
+                    settings.reportTemplate = storedAttendanceTemplate;
+                    button1.Enabled = false;
+                    generatePersrepBtn.Enabled = true;
+                } else
+                {
+                    button1.Enabled = true;
+                }
                 Debug.Print("Report type is now Attendance");
             }
         }
@@ -335,31 +387,41 @@ namespace personali_raport
             
             if (ofd.ShowDialog() == DialogResult.OK && !ofd.FileName.Equals(""))
             {
-                try {
-                    conn = new OleDbConnection(GetConnectionString(ofd.FileName));
-                    conn.Open();
-                    writer = new AccessWriter(conn);
-                    pmReader = new PersonMessageReader(conn);
-                    personnelReader = new AccessPersonnelReader(conn);
+                storedSettings.Write("AccessDatabase", ofd.FileName);
+                openDatabase(ofd.FileName);
+            }
+        }
 
-                    Debug.Print("Database connected to: " + ofd.FileName);
-                    databaseConnectionErrorMsg.Visible = false;
-                    openDatabaseButton.Enabled = false;
-                    startDataCollectionBtn.Enabled = true;
-                    tabControl1.Enabled = true;
-                } catch (InvalidOperationException ex) {
-                    Debug.Print(ex.ToString());
-                    openDatabaseButton.Enabled = false;
-                    databaseConnectionErrorMsg.Visible = true;
-                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-                    tabControl1.Enabled = false;
-                } catch (OleDbException ex)
-                {
-                    Debug.Print(ex.ToString());
-                    databaseConnectionErrorMsg.Visible = true;
-                    databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-                    tabControl1.Enabled = false;
-                }
+        private void openDatabase(string databaseFileName)
+        {
+            try
+            {
+                conn = new OleDbConnection(GetConnectionString(databaseFileName));
+                conn.Open();
+                writer = new AccessWriter(conn);
+                pmReader = new PersonMessageReader(conn);
+                personnelReader = new AccessPersonnelReader(conn);
+
+                Debug.Print("Database connected to: " + databaseFileName);
+                databaseConnectionErrorMsg.Visible = false;
+                openDatabaseButton.Enabled = false;
+                startDataCollectionBtn.Enabled = true;
+                tabControl1.Enabled = true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+                openDatabaseButton.Enabled = false;
+                databaseConnectionErrorMsg.Visible = true;
+                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+                tabControl1.Enabled = false;
+            }
+            catch (OleDbException ex)
+            {
+                Debug.Print(ex.ToString());
+                databaseConnectionErrorMsg.Visible = true;
+                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+                tabControl1.Enabled = false;
             }
         }
 
@@ -380,6 +442,13 @@ namespace personali_raport
             if (ofd.ShowDialog() == DialogResult.OK && !ofd.FileName.Equals(""))
             {
                 settings.reportTemplate = ofd.FileName;
+                if (settings.reportType == ReportType.PERSREP)
+                {
+                    storedSettings.Write("PersrepTemplate", ofd.FileName);
+                } else if (settings.reportType == ReportType.ATTENDANCE)
+                {
+                    storedSettings.Write("AttendanceTemplate", ofd.FileName);
+                }
                 button1.Enabled = false;
                 UpdateValidity();
             }

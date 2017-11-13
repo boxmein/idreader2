@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 /*
     ==== MS Access Table Structure ====
@@ -15,14 +16,14 @@ using System.Threading.Tasks;
 
     Access: 
     Create Table >
-        Name: Raffas
+        Name: Yksus
         Columns:
             - ID            created automatically (integer primary key)
             - Eesnimi       Text
             - Perekonnanimi Text
             - Ametikoht     Text
             - Auaste        Text
-            - Grupp         Text
+            - Kompanii      Text
             - KKV           Text (KKV või RES)
             - Isikukood     Text
             - Elukoht       Text
@@ -34,20 +35,21 @@ namespace personali_raport
 {
     class AccessPersonnelReader : IPersonnelReader
     {
-        const string TABLE_NAME = "Raffas";
+        const string TABLE_NAME = "Yksus";
         
         const string FIRST_NAME_FIELD = "Eesnimi";
         const string LAST_NAME_FIELD = "Perekonnanimi";
         const string POSITION_FIELD = "Ametikoht";
         const string RANK_FIELD = "Auaste";
-        const string GROUP_FIELD = "Grupp";
+        const string COMPANY_FIELD = "Kompanii";
+        const string PLATOON_FIELD = "Ryhm";
         const string KKV_FIELD = "KKV";
         const string ID_CODE_FIELD = "Isikukood";
         const string ADDRESS_FIELD = "Elukoht";
         const string PHONE_FIELD = "Telefon";
+        const string KUTSE_FIELD = "Kutse";
 
         const string TABLE_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE " + ID_CODE_FIELD + " = @idCode;";
-
 
         private OleDbConnection databaseConnection;
 
@@ -82,12 +84,16 @@ namespace personali_raport
                         string kkv = reader.GetString(reader.GetOrdinal(KKV_FIELD)); // Kaitseväekohuslane / reservohvitser
                         string rank = reader.GetString(reader.GetOrdinal(RANK_FIELD)); // Auaste
                         string position = reader.GetString(reader.GetOrdinal(POSITION_FIELD)); // Ametikoht
-                        string group = reader.GetString(reader.GetOrdinal(GROUP_FIELD)); // Rühm
-                        
+                        string company = reader.GetString(reader.GetOrdinal(COMPANY_FIELD)); // Kompanii
+                        string platoon = reader.GetString(reader.GetOrdinal(PLATOON_FIELD)); // Rühm
+                        int kutse = reader.GetInt32(reader.GetOrdinal(KUTSE_FIELD)); // Kutse
+
                         Debug.Print("AccessPersonnelReader fetch: " + idCode);
-                        person.data.Add("group", group);
+                        person.data.Add("Kompanii", company);
+                        person.data.Add("Ryhm", platoon);
                         person.data.Add("Eesnimi", firstName);
                         person.data.Add("Perekonnanimi", lastName);
+                        person.data.Add("Kutse", kutse.ToString());
 
                         return person;
                     }
@@ -102,11 +108,15 @@ namespace personali_raport
             }
             catch (OleDbException ex)
             {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Üksuse tabelit '" + TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
                 Debug.Print(ex.ToString());
                 return null;
             }
         }
-
+        
         public void Dispose()
         {
             Dispose(true);

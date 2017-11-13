@@ -91,6 +91,8 @@ namespace personali_raport
         { 
             startDataCollectionBtn.Visible = true;
             stopDataCollectionBtn.Visible = false;
+            saveHandwrittenID.Enabled = false;
+            textBox1.Enabled = false;
             stopCollector();
         }
 
@@ -213,6 +215,8 @@ namespace personali_raport
             startCollector();
             startDataCollectionBtn.Visible = false;
             stopDataCollectionBtn.Visible = true;
+            saveHandwrittenID.Enabled = true;
+            textBox1.Enabled = true;
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -307,8 +311,6 @@ namespace personali_raport
             string firstName = null;
             string lastName = null;
             string idCode = null;
-
-            incrementScannedCount();
             
             var match = firstNameRx.Match(personStructure);
 
@@ -367,13 +369,22 @@ namespace personali_raport
                 return;
             }
 
-            writer.log(firstName, lastName, idCode);
+            incrementScannedCount();
+
+            Person p = personnelReader.ReadPersonalData(idCode);
+            string kutse = p?.data["Kutse"];
+            if (kutse == null)
+            {
+                Debug.Print("Inimese kutset ei saanud logida, puudub Kutse: {0}", idCode);
+            }
+            writer.log(firstName, lastName, idCode, kutse ?? "-1");
             ShowPerson(firstName + " " + lastName, pmReader.GetPersonMessage(idCode));
         }
 
         private void onLoggerProcessExited(object sender, EventArgs args)
         {
-            MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Debug.Print("Logger exit: {0}", loggerProcess.ExitCode);
+            // MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void saveHandwrittenID_Click(object sender, EventArgs e)
@@ -383,6 +394,7 @@ namespace personali_raport
 
             var person = personnelReader.ReadPersonalData(idCode);
 
+            // If the handwritten ID code matched a person, allow manual entry.
             if (person != null)
             {
                 string firstName, lastName;
@@ -390,6 +402,16 @@ namespace personali_raport
                 person.data.TryGetValue("Perekonnanimi", out lastName);
                 Debug.Print("Manual Entry: {0}", idCode);
                 logPerson(firstName, lastName, idCode);
+            }
+            // If the handwritten ID code did not match a person, ask for name/last name but allow empty.
+            else
+            {
+                using (var f = new PersonNameEntry())
+                {
+                    var result = f.ShowDialog();
+                    Debug.Print("PersonNameEntry result was: {0} Name: {1}", result.ToString(), f.firstName + " " + f.lastName);
+                    logPerson(f.firstName, f.lastName, idCode);
+                }
             }
         }
     }

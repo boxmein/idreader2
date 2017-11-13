@@ -71,33 +71,18 @@ namespace personali_raport
             Dictionary<string, List<Person>> personnelByGroup = new Dictionary<string, List<Person>>();
 
             string tempDataValue;
-            string groupIndexStr;
-            int groupIndex;
-            
             // 
             // Collect all personnel into groups: 
             // { "group": [ person... ] }, where keys are ordered based on Excel
             foreach (Person person in personnel)
             {
-                if (!person.data.TryGetValue("group", out tempDataValue))
+                if (!person.data.TryGetValue("Kompanii", out tempDataValue))
                 {
                     tempDataValue = PERSREP_UNGROUPED;
                 }
 
                 if (!personnelByGroup.ContainsKey(tempDataValue))
                 {
-                    if (!person.data.TryGetValue("group#", out groupIndexStr))
-                    {
-                        groupIndex = 0;
-                    }
-                    else
-                    {
-                        if (!Int32.TryParse(groupIndexStr, out groupIndex))
-                        {
-                            groupIndex = 0;
-                        }
-                    }
-
                     personnelByGroup[tempDataValue] = new List<Person>();
                 }
                 personnelByGroup[tempDataValue].Add(person);

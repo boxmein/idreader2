@@ -36,6 +36,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.startDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerErrorLabel = new System.Windows.Forms.Label();
             this.timeFilterEnabledCheckbox = new System.Windows.Forms.CheckBox();

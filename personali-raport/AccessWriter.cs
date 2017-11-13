@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data.OleDb;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 /*
     ==== MS Access Table Structure ====
@@ -13,13 +14,14 @@ using System.Diagnostics;
 
     Access: 
     Create Table >
-        Name: IDKaardid
+        Name: Logi
         Columns:
             - ID                created automatically (integer primary key)
             - Eesnimi           Text
             - Perekonnanimi     Text
             - Kellaaeg          Date/Time
             - Isikukood         Text
+            - Kutse             Number
 */
 
 namespace personali_raport
@@ -33,12 +35,12 @@ namespace personali_raport
         /// <summary>
         ///  The name of the table that the ID card logs will be put into.
         /// </summary>
-        const string LOGS_TABLE_NAME = "IDKaardid";
+        const string LOGS_TABLE_NAME = "Logi";
 
         /// <summary>
         /// The INSERT statement to add a log, for use as a prepared statement.
         /// </summary>
-        const string LOG_INSERT_STATEMENT = "INSERT INTO " + LOGS_TABLE_NAME + " (Eesnimi, Perekonnanimi, Isikukood, Kellaaeg) VALUES (?, ?, ?, ?);";
+        const string LOG_INSERT_STATEMENT = "INSERT INTO " + LOGS_TABLE_NAME + " (Eesnimi, Perekonnanimi, Isikukood, Kellaaeg, Kutse) VALUES (?, ?, ?, ?, ?);";
 
         /// <summary>
         /// Keeps track of the database connection for the Access database.
@@ -64,7 +66,7 @@ namespace personali_raport
         /// <param name="lastName">The person's last name.</param>
         /// <param name="idCode">The person's ID code.</param>
         /// <returns>true if the insert succeeded (and inserted 1 row), false if an InvalidOperationException happened.</returns>
-        public bool log(string firstName, string lastName, string idCode)
+        public bool log(string firstName, string lastName, string idCode, string kutseStr)
         {
             var cursor = databaseConnection.CreateCommand();
             cursor.CommandText = LOG_INSERT_STATEMENT;
@@ -77,6 +79,15 @@ namespace personali_raport
             cursor.Parameters.Add("Kellaaeg", OleDbType.Date, 4);
             cursor.Parameters[3].Value = DateTime.Now;
 
+            int kutse = -1;
+            if (!Int32.TryParse(kutseStr, out kutse))
+            {
+                Debug.Print("Could not parse kutse to int: {0}", kutseStr);
+            }
+
+            cursor.Parameters.Add("Kutse", OleDbType.Integer, 1);
+            cursor.Parameters[4].Value = kutse;
+
             try {
                 cursor.Prepare();
                 int returnValue = cursor.ExecuteNonQuery();
@@ -88,6 +99,10 @@ namespace personali_raport
                 return false;
             } catch (OleDbException ex)
             {
+                if ((uint) ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Logide tabelit '" + LOGS_TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
                 Debug.Print(ex.ToString());
                 return false;
             }

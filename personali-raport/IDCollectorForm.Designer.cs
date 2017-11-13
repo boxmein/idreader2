@@ -76,7 +76,7 @@
             this.stopDataCollectionBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.stopDataCollectionBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.stopDataCollectionBtn.Location = new System.Drawing.Point(676, 361);
-            this.stopDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.stopDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4);
             this.stopDataCollectionBtn.Name = "stopDataCollectionBtn";
             this.stopDataCollectionBtn.Size = new System.Drawing.Size(229, 50);
             this.stopDataCollectionBtn.TabIndex = 2;
@@ -93,8 +93,8 @@
             this.startDataCollectionBtn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(255)))), ((int)(((byte)(82)))));
             this.startDataCollectionBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.startDataCollectionBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
-            this.startDataCollectionBtn.Location = new System.Drawing.Point(676, 361);
-            this.startDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.startDataCollectionBtn.Location = new System.Drawing.Point(676, 360);
+            this.startDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4);
             this.startDataCollectionBtn.Name = "startDataCollectionBtn";
             this.startDataCollectionBtn.Size = new System.Drawing.Size(229, 50);
             this.startDataCollectionBtn.TabIndex = 4;
@@ -106,6 +106,7 @@
             // 
             this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox1.Enabled = false;
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.textBox1.Location = new System.Drawing.Point(193, 361);
             this.textBox1.Margin = new System.Windows.Forms.Padding(4, 10, 4, 10);
@@ -113,18 +114,18 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(301, 49);
             this.textBox1.TabIndex = 5;
-            this.textBox1.Text = "39610042010";
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // saveHandwrittenID
             // 
             this.saveHandwrittenID.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.saveHandwrittenID.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(135)))), ((int)(((byte)(255)))));
+            this.saveHandwrittenID.Enabled = false;
             this.saveHandwrittenID.FlatAppearance.BorderSize = 0;
             this.saveHandwrittenID.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.saveHandwrittenID.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
             this.saveHandwrittenID.Location = new System.Drawing.Point(501, 361);
-            this.saveHandwrittenID.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.saveHandwrittenID.Margin = new System.Windows.Forms.Padding(4);
             this.saveHandwrittenID.Name = "saveHandwrittenID";
             this.saveHandwrittenID.Size = new System.Drawing.Size(132, 50);
             this.saveHandwrittenID.TabIndex = 6;
@@ -183,7 +184,7 @@
             this.Controls.Add(this.stopDataCollectionBtn);
             this.Controls.Add(this.customTextLabel);
             this.Controls.Add(this.nameLabel);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MinimumSize = new System.Drawing.Size(762, 326);
             this.Name = "IDCollectorForm";
             this.Text = "IDCollectorForm";

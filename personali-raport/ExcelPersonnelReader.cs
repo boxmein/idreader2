@@ -230,7 +230,6 @@ namespace personali_raport
             } else
             {
                 person.data.Add("group", GetValueFromCell(group, "A"));
-                person.data.Add("group#", group.ToString());
             }
 
             return person;
