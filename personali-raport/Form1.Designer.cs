@@ -36,7 +36,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.startDataCollectionBtn = new System.Windows.Forms.Button();
             this.loggerErrorLabel = new System.Windows.Forms.Label();
             this.timeFilterEnabledCheckbox = new System.Windows.Forms.CheckBox();
@@ -50,18 +49,17 @@
             this.button1 = new System.Windows.Forms.Button();
             this.reportOptionAttendance = new System.Windows.Forms.RadioButton();
             this.reportOptionPersrep = new System.Windows.Forms.RadioButton();
-            this.saveGroupBox = new System.Windows.Forms.GroupBox();
             this.saveReportButton = new System.Windows.Forms.Button();
-            this.progressStatusLabel = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.databaseConnectionErrorMsg = new System.Windows.Forms.Label();
             this.openDatabaseButton = new System.Windows.Forms.Button();
+            this.databaseConnectionErrorMsg = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.progressStatusLabel = new System.Windows.Forms.Label();
+            this.hetkeseisBtn = new System.Windows.Forms.Button();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
-            this.saveGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -74,10 +72,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.startDataCollectionBtn.Enabled = false;
             this.startDataCollectionBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startDataCollectionBtn.Location = new System.Drawing.Point(52, 79);
+            this.startDataCollectionBtn.Location = new System.Drawing.Point(3, 4);
             this.startDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4);
             this.startDataCollectionBtn.Name = "startDataCollectionBtn";
-            this.startDataCollectionBtn.Size = new System.Drawing.Size(332, 71);
+            this.startDataCollectionBtn.Size = new System.Drawing.Size(350, 115);
             this.startDataCollectionBtn.TabIndex = 7;
             this.startDataCollectionBtn.Text = "Kogu ID-kaarte";
             this.startDataCollectionBtn.UseVisualStyleBackColor = true;
@@ -86,7 +84,7 @@
             // loggerErrorLabel
             // 
             this.loggerErrorLabel.ForeColor = System.Drawing.Color.Red;
-            this.loggerErrorLabel.Location = new System.Drawing.Point(11, 17);
+            this.loggerErrorLabel.Location = new System.Drawing.Point(8, 312);
             this.loggerErrorLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.loggerErrorLabel.Name = "loggerErrorLabel";
             this.loggerErrorLabel.Size = new System.Drawing.Size(317, 20);
@@ -186,6 +184,7 @@
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionAttendance);
             this.reportCreatorGroupBox.Controls.Add(this.generatePersrepBtn);
             this.reportCreatorGroupBox.Controls.Add(this.reportOptionPersrep);
+            this.reportCreatorGroupBox.Controls.Add(this.saveReportButton);
             this.reportCreatorGroupBox.Location = new System.Drawing.Point(8, 8);
             this.reportCreatorGroupBox.Margin = new System.Windows.Forms.Padding(4);
             this.reportCreatorGroupBox.Name = "reportCreatorGroupBox";
@@ -231,23 +230,10 @@
             this.reportOptionPersrep.UseVisualStyleBackColor = true;
             this.reportOptionPersrep.CheckedChanged += new System.EventHandler(this.reportOptionPersrep_CheckedChanged);
             // 
-            // saveGroupBox
-            // 
-            this.saveGroupBox.Controls.Add(this.saveReportButton);
-            this.saveGroupBox.Controls.Add(this.progressStatusLabel);
-            this.saveGroupBox.Location = new System.Drawing.Point(4, 287);
-            this.saveGroupBox.Margin = new System.Windows.Forms.Padding(4);
-            this.saveGroupBox.Name = "saveGroupBox";
-            this.saveGroupBox.Padding = new System.Windows.Forms.Padding(4);
-            this.saveGroupBox.Size = new System.Drawing.Size(345, 131);
-            this.saveGroupBox.TabIndex = 8;
-            this.saveGroupBox.TabStop = false;
-            this.saveGroupBox.Text = "Salvesta tulemused";
-            // 
             // saveReportButton
             // 
             this.saveReportButton.Enabled = false;
-            this.saveReportButton.Location = new System.Drawing.Point(2, 23);
+            this.saveReportButton.Location = new System.Drawing.Point(147, 63);
             this.saveReportButton.Margin = new System.Windows.Forms.Padding(4);
             this.saveReportButton.Name = "saveReportButton";
             this.saveReportButton.Size = new System.Drawing.Size(180, 45);
@@ -256,39 +242,17 @@
             this.saveReportButton.UseVisualStyleBackColor = true;
             this.saveReportButton.Click += new System.EventHandler(this.saveReportButton_Click);
             // 
-            // progressStatusLabel
-            // 
-            this.progressStatusLabel.BackColor = System.Drawing.SystemColors.Control;
-            this.progressStatusLabel.Location = new System.Drawing.Point(3, 77);
-            this.progressStatusLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.progressStatusLabel.Name = "progressStatusLabel";
-            this.progressStatusLabel.Size = new System.Drawing.Size(328, 50);
-            this.progressStatusLabel.TabIndex = 2;
-            // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.databaseConnectionErrorMsg);
             this.groupBox2.Controls.Add(this.openDatabaseButton);
-            this.groupBox2.Location = new System.Drawing.Point(19, 24);
+            this.groupBox2.Location = new System.Drawing.Point(13, 399);
             this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox2.Size = new System.Drawing.Size(447, 103);
+            this.groupBox2.Size = new System.Drawing.Size(362, 117);
             this.groupBox2.TabIndex = 14;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Andmebaasiühendus";
-            // 
-            // databaseConnectionErrorMsg
-            // 
-            this.databaseConnectionErrorMsg.AutoSize = true;
-            this.databaseConnectionErrorMsg.ForeColor = System.Drawing.Color.Red;
-            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(15, 75);
-            this.databaseConnectionErrorMsg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.databaseConnectionErrorMsg.Name = "databaseConnectionErrorMsg";
-            this.databaseConnectionErrorMsg.Size = new System.Drawing.Size(248, 17);
-            this.databaseConnectionErrorMsg.TabIndex = 1;
-            this.databaseConnectionErrorMsg.Text = "Andmebaasi laadimine ei õnnestunud.";
-            this.databaseConnectionErrorMsg.Visible = false;
             // 
             // openDatabaseButton
             // 
@@ -301,51 +265,85 @@
             this.openDatabaseButton.UseVisualStyleBackColor = true;
             this.openDatabaseButton.Click += new System.EventHandler(this.openDatabaseButton_Click);
             // 
+            // databaseConnectionErrorMsg
+            // 
+            this.databaseConnectionErrorMsg.AutoSize = true;
+            this.databaseConnectionErrorMsg.ForeColor = System.Drawing.Color.Red;
+            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(6, 332);
+            this.databaseConnectionErrorMsg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.databaseConnectionErrorMsg.Name = "databaseConnectionErrorMsg";
+            this.databaseConnectionErrorMsg.Size = new System.Drawing.Size(248, 17);
+            this.databaseConnectionErrorMsg.TabIndex = 1;
+            this.databaseConnectionErrorMsg.Text = "Andmebaasi laadimine ei õnnestunud.";
+            this.databaseConnectionErrorMsg.Visible = false;
+            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Enabled = false;
-            this.tabControl1.Location = new System.Drawing.Point(19, 149);
+            this.tabControl1.Location = new System.Drawing.Point(13, 13);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(451, 511);
+            this.tabControl1.Size = new System.Drawing.Size(366, 382);
             this.tabControl1.TabIndex = 19;
             // 
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage1.Controls.Add(this.hetkeseisBtn);
+            this.tabPage1.Controls.Add(this.databaseConnectionErrorMsg);
             this.tabPage1.Controls.Add(this.loggerErrorLabel);
             this.tabPage1.Controls.Add(this.startDataCollectionBtn);
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage1.Size = new System.Drawing.Size(443, 482);
+            this.tabPage1.Size = new System.Drawing.Size(358, 353);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Kogumine";
             // 
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage2.Controls.Add(this.progressStatusLabel);
             this.tabPage2.Controls.Add(this.reportCreatorGroupBox);
             this.tabPage2.Controls.Add(this.timeFilterGroupBox);
-            this.tabPage2.Controls.Add(this.saveGroupBox);
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage2.Size = new System.Drawing.Size(443, 482);
+            this.tabPage2.Size = new System.Drawing.Size(358, 353);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Rapordid";
             this.tabPage2.Click += new System.EventHandler(this.tabPage2_Click);
+            // 
+            // progressStatusLabel
+            // 
+            this.progressStatusLabel.BackColor = System.Drawing.SystemColors.Control;
+            this.progressStatusLabel.Location = new System.Drawing.Point(6, 291);
+            this.progressStatusLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.progressStatusLabel.Name = "progressStatusLabel";
+            this.progressStatusLabel.Size = new System.Drawing.Size(342, 58);
+            this.progressStatusLabel.TabIndex = 2;
+            // 
+            // hetkeseisBtn
+            // 
+            this.hetkeseisBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.hetkeseisBtn.Location = new System.Drawing.Point(3, 126);
+            this.hetkeseisBtn.Name = "hetkeseisBtn";
+            this.hetkeseisBtn.Size = new System.Drawing.Size(348, 101);
+            this.hetkeseisBtn.TabIndex = 8;
+            this.hetkeseisBtn.Text = "Hetkeseis";
+            this.hetkeseisBtn.UseVisualStyleBackColor = true;
+            this.hetkeseisBtn.Click += new System.EventHandler(this.hetkeseisBtn_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(483, 675);
+            this.ClientSize = new System.Drawing.Size(386, 528);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.groupBox2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -359,11 +357,10 @@
             this.timeFilterGroupBox.PerformLayout();
             this.reportCreatorGroupBox.ResumeLayout(false);
             this.reportCreatorGroupBox.PerformLayout();
-            this.saveGroupBox.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -382,9 +379,7 @@
         private System.Windows.Forms.RadioButton reportOptionPersrep;
         private System.Windows.Forms.Button startDataCollectionBtn;
         private System.Windows.Forms.Label loggerErrorLabel;
-        private System.Windows.Forms.GroupBox saveGroupBox;
         private System.Windows.Forms.Button saveReportButton;
-        private System.Windows.Forms.Label progressStatusLabel;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button openDatabaseButton;
         private System.Windows.Forms.Label databaseConnectionErrorMsg;
@@ -392,6 +387,8 @@
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label progressStatusLabel;
+        private System.Windows.Forms.Button hetkeseisBtn;
     }
 }
 

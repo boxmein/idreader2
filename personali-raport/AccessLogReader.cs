@@ -74,9 +74,24 @@ namespace personali_raport
                                     FROM Yksus
                                     INNER JOIN Logi
                                         ON Logi.Isikukood = Yksus.Isikukood
-                                    WHERE Logi.Kellaaeg > #01/11/2017# 
-                                      AND Logi.Kellaaeg < #30/11/2017#
+                                    WHERE Logi.Kellaaeg > @start 
+                                      AND Logi.Kellaaeg < @end
                                     GROUP BY Yksus.Kompanii;";
+
+        /// <summary>
+        /// Select all serving people and whether or not they have been signed in.
+        /// </summary>
+        const string TREE_QUERY = @"SELECT 
+                                        Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi, 
+                                        Yksus.Kompanii, Yksus.Ryhm, COUNT(Logi.Kellaaeg) AS Kohal
+                                    FROM Yksus 
+                                    LEFT OUTER JOIN Logi 
+                                        ON Logi.Isikukood = Yksus.Isikukood 
+                                    WHERE Logi.Kellaaeg >= @start
+                                        AND Logi.Kellaaeg <= @end
+                                    GROUP BY Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi, 
+                                             Yksus.Kompanii, Yksus.Ryhm
+                                    ORDER BY Yksus.Kompanii, Yksus.Ryhm ASC;";
 
         private OleDbConnection databaseConnection;
 
@@ -164,10 +179,16 @@ namespace personali_raport
             }
         }
 
-        public IEnumerable<PersrepItem> ReadPersrepData(DateTime start, DateTime end) {
+        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end) {
             Debug.Assert(start != null, "ReadPersrepData: start time was null");
             Debug.Assert(end != null, "ReadPersrepData: end time was null");
             var cursor = databaseConnection.CreateCommand();
+
+            Debug.Print("ReadPersrepData: start");
+
+            var data = new List<PersrepItem>();
+
+            cursor.CommandText = PERSREP_QUERY;
             
             cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
             cursor.Parameters[0].Value = start;
@@ -185,6 +206,7 @@ namespace personali_raport
             catch (InvalidOperationException ex)
             {
                 Debug.Print(ex.ToString());
+                return data;
             }
             catch (OleDbException ex)
             {
@@ -193,42 +215,46 @@ namespace personali_raport
                     MessageBox.Show("Logide tabelit '" + TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
                 }
                 Debug.Print(ex.ToString());
+                return data;
             }
 
             if (reader == null)
             {
                 Debug.Print("Something went wrong while reading.");
-                yield break;
+                return data;
             }
 
             if (reader.HasRows)
             {
+                Debug.Print("ReadPersrepData: has rows");
                 while (reader.Read())
                 {
                     string company = reader.GetString(reader.GetOrdinal("Kompanii"));
-                    int ohvitsere = reader.GetInt32(reader.GetOrdinal("Ohvitsere"));
-                    int allohvitsere = reader.GetInt32(reader.GetOrdinal("Allohvitsere"));
-                    int sodureid = reader.GetInt32(reader.GetOrdinal("Sodureid"));
-                    int tsiviliste = reader.GetInt32(reader.GetOrdinal("Tsiviliste"));
+                    int ohvitsere = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Ohvitsere")));
+                    int allohvitsere = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Allohvitsere")));
+                    int sodureid = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Sodureid")));
+                    int tsiviliste = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Tsiviliste")));
 
                     Debug.Print("PERSREP Kompanii: {0} O {1} AO {2} S {3} TSIV {4}", company, ohvitsere, allohvitsere, sodureid, tsiviliste);
-                    yield return new PersrepItem()
+                    data.Add(new PersrepItem()
                     {
                         company = company,
                         ohvitsere = ohvitsere,
                         allohvitsere = allohvitsere,
                         sodureid = sodureid,
                         tsiviliste = tsiviliste
-                    };
+                    });
                 }
             }
             else
             {
-                yield break;
+                Debug.Print("ReadPersrepData: no rows");
+                return data;
             }
+            return data;
         }
 
-        public IEnumerable<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string ryhm = null)
+        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string ryhm = null)
         {
             Debug.Assert(start != null, "ReadAttendanceData: start time was null");
             Debug.Assert(end != null, "ReadAttendanceData: end time was null");
@@ -241,6 +267,8 @@ namespace personali_raport
 
             cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
             cursor.Parameters[1].Value = end;
+
+            var data = new List<AttendanceItem>();
 
             if (ryhm != null)
             {
@@ -258,6 +286,7 @@ namespace personali_raport
             catch (InvalidOperationException ex)
             {
                 Debug.Print(ex.ToString());
+                return data;
             }
             catch (OleDbException ex)
             {
@@ -266,12 +295,13 @@ namespace personali_raport
                     MessageBox.Show("Logide tabelit '" + TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
                 }
                 Debug.Print(ex.ToString());
+                return data;
             }
 
             if (reader == null)
             {
                 Debug.Print("Something went wrong while reading.");
-                yield break;
+                return data;
             }
 
             if (reader.HasRows)
@@ -280,68 +310,144 @@ namespace personali_raport
                 {
                     string name = reader.GetString(reader.GetOrdinal("Nimi"));
                     string platoon = reader.GetString(reader.GetOrdinal("Ryhm"));
-                    yield return new AttendanceItem()
+                    data.Add(new AttendanceItem()
                     {
                         name = name,
                         platoon = platoon
-                    };
+                    });
                 }
             }
             else
             {
-                yield break;
+                return data;
             }
+            return data;
         }
+
+        public List<Person> ReadTreeViewData(DateTime start, DateTime end)
+        {
+            Debug.Assert(start != null, "ReadTreeViewData: start time was null");
+            Debug.Assert(end != null, "ReadTreeViewData: end time was null");
+            var cursor = databaseConnection.CreateCommand();
+
+            Debug.Print("ReadTreeViewData: start");
+
+            var data = new List<Person>();
+
+            cursor.CommandText = TREE_QUERY;
+
+            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
+            cursor.Parameters[0].Value = start;
+
+            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
+            cursor.Parameters[1].Value = end;
+
+            CardLogEntry entry = null;
+            OleDbDataReader reader = null;
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+                return data;
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Logide või personali tabelit '" + TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+                return data;
+            }
+
+            if (reader == null)
+            {
+                Debug.Print("Something went wrong while reading.");
+                return data;
+            }
+
+            if (reader.HasRows)
+            {
+                Debug.Print("ReadTreeViewData: has rows");
+                while (reader.Read())
+                {
+                    string firstName = reader.GetString(reader.GetOrdinal("Eesnimi"));
+                    string lastName = reader.GetString(reader.GetOrdinal("Perekonnanimi"));
+                    string company = reader.GetString(reader.GetOrdinal("Kompanii"));
+                    string platoon = reader.GetString(reader.GetOrdinal("Ryhm"));
+                    string attends = reader.GetInt32(reader.GetOrdinal("Kohal")).ToString();
+
+                    var p = new Person();
+                    p.data.Add("Eesnimi", firstName);
+                    p.data.Add("Perekonnanimi", lastName);
+                    p.data.Add("Kompanii", company);
+                    p.data.Add("Ryhm", platoon);
+                    p.data.Add("Kohal", attends);
+                    data.Add(p);
+                }
+            }
+            else
+            {
+                Debug.Print("ReadTreeViewData: no rows");
+                return data;
+            }
+            return data;
+        }
+
+    }
+
+    /// <summary>
+    /// Represents an item in the attendance report.
+    /// </summary>
+    public class AttendanceItem
+    {
+        /// <summary>
+        /// The attending person's name.
+        /// </summary>
+        public string name;
+        /// <summary>
+        /// The attending person's platoon.
+        /// </summary>
+        public string platoon;
+    }
+
+    /// <summary>
+    /// Represents a PERSREP row.
+    /// </summary>
+    public class PersrepItem
+    {
+        /// <summary>
+        /// The company that this PERSREP item counts.
+        /// Kompanii, mida on loendatud.
+        /// </summary>
+        public string company;
 
         /// <summary>
-        /// Represents an item in the attendance report.
+        /// The amount of officer-ranked people in the company who attended.
+        /// Ohvitseride arv, kes selles kompaniis kohale tulid.
         /// </summary>
-        public class AttendanceItem
-        {
-            /// <summary>
-            /// The attending person's name.
-            /// </summary>
-            public string name;
-            /// <summary>
-            /// The attending person's platoon.
-            /// </summary>
-            public string platoon;
-        }
+        public int ohvitsere;
 
         /// <summary>
-        /// Represents a PERSREP row.
+        /// The amount of subofficer-ranked people in the company who attended.
+        /// Allohvitseride arv, kes selles kompaniis kohale tulid.
         /// </summary>
-        public class PersrepItem
-        {
-            /// <summary>
-            /// The company that this PERSREP item counts.
-            /// Kompanii, mida on loendatud.
-            /// </summary>
-            public string company;
+        public int allohvitsere;
 
-            /// <summary>
-            /// The amount of officer-ranked people in the company who attended.
-            /// Ohvitseride arv, kes selles kompaniis kohale tulid.
-            /// </summary>
-            public int ohvitsere;
+        /// <summary>
+        /// The amount of soldiers in the company who attended.
+        /// Sõdurite arv, kes kohale tulid.
+        /// </summary>
+        public int sodureid;
 
-            /// <summary>
-            /// The amount of subofficer-ranked people in the company who attended.
-            /// Allohvitseride arv, kes selles kompaniis kohale tulid.
-            /// </summary>
-            public int allohvitsere;
-            
-            /// <summary>
-            /// The amount of soldiers in the company who attended.
-            /// Sõdurite arv, kes kohale tulid.
-            /// </summary>
-            public int sodureid;
-
-            /// <summary>
-            /// The amount of civilians who attended.
-            /// Tsivilistide arv, kes kohale tulid.
-            /// </summary>
-            public int tsiviliste;
-        }
+        /// <summary>
+        /// The amount of civilians who attended.
+        /// Tsivilistide arv, kes kohale tulid.
+        /// </summary>
+        public int tsiviliste;
     }
 }

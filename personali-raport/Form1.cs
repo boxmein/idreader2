@@ -51,6 +51,12 @@ namespace personali_raport
         IReportWriter reportWriter;
 
         /// <summary>
+        /// The Card Log Reader reads card logs and maps to various data structures for UX and report purposes.
+        /// </summary>
+        ILogReader cardLogReader;
+
+
+        /// <summary>
         /// A Form that shows up when the ID card reader is collecting data.
         /// Shows the current person's name, ID code and personal message.
         /// Uses the AccessWriter and PersonMessageReader.
@@ -71,8 +77,18 @@ namespace personali_raport
         string storedPersrepTemplate;
         string storedAttendanceTemplate;
 
+        /// <summary>
+        /// Is idreader2.exe present?
+        /// </summary>
         bool hasIDReaderBackend = false;
-
+        /// <summary>
+        /// Has the report been written and can it be saved?
+        /// </summary>
+        bool reportReady = false;
+        /// <summary>
+        /// Is the report currently being generated?
+        /// </summary>
+        bool reportLoading = false;
         /// <summary>
         /// Constructs the Form.
         /// Initializes the ReportSettings object.
@@ -83,6 +99,19 @@ namespace personali_raport
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             settings = new ReportSettings();
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Destroy Excel with lasers!
+        /// Kills all Excel processes.
+        /// </summary>
+        private void DestroyAllExcel()
+        {
+            foreach (var process in Process.GetProcessesByName("EXCEL"))
+            {
+                Debug.Print("Stopping Excel: {0}", process.Id);
+                process.CloseMainWindow();
+            }
         }
 
         /// <summary>
@@ -111,34 +140,39 @@ namespace personali_raport
         /// <param name="e">event</param>
         private void Form1_Load(object sender, EventArgs e)
         {
+            DestroyAllExcel();
             // Initialize settings
             settings.reportType = ReportType.PERSREP;
 
             storedSettings = new IniFile();
 
             // Load Access DB from the INI file if possible
-            if (storedSettings.KeyExists("AccessDatabase"))
+            if (storedSettings.KeyExists("AccessDatabase") && File.Exists(storedSettings.Read("AccessDatabase")))
             {
+                Debug.Print("LOAD: Found stored database! Connecting.");
                 openDatabase(storedSettings.Read("AccessDatabase"));
             }
 
-            if (storedSettings.KeyExists("PersrepTemplate"))
+            if (storedSettings.KeyExists("PersrepTemplate") && File.Exists(storedSettings.Read("PersrepTemplate")))
             {
+                Debug.Print("LOAD: Found stored PERSREP template file");
                 storedPersrepTemplate = storedSettings.Read("PersrepTemplate");
+                settings.reportTemplate = storedPersrepTemplate;
                 button1.Enabled = false;
                 // The default option is to generate a PERSREP, so enable generate button too.
                 generatePersrepBtn.Enabled = true;
             }
 
-            if (storedSettings.KeyExists("AttendanceTemplate"))
+            if (storedSettings.KeyExists("AttendanceTemplate") && File.Exists(storedSettings.Read("AttendanceTemplate")))
             {
-                storedPersrepTemplate = storedSettings.Read("AttendanceTemplate");
+                Debug.Print("LOAD: Found stored attendance template file");
+                storedAttendanceTemplate = storedSettings.Read("AttendanceTemplate");
                 button1.Enabled = false;
+                generatePersrepBtn.Enabled = true;
             }
 
             settings.personnelFileName = null;
             settings.reportFileName = null;
-            settings.reportTemplate = null;
 
             // Initialize time filter settings
             if (timeFilterEnabledCheckbox.Checked)
@@ -147,8 +181,8 @@ namespace personali_raport
                 settings.endOfReport = dataSelectionEndDate.Value;
             }
             else {
-                dataSelectionStartDate.Value = DateTimePicker.MinimumDateTime; // DateTime.Today.Subtract(TimeSpan.FromDays(1));
-                dataSelectionEndDate.Value = DateTimePicker.MaximumDateTime; // DateTime.Today;
+                dataSelectionStartDate.Value = DateTime.Today.Subtract(TimeSpan.FromDays(1));
+                dataSelectionEndDate.Value = DateTime.Today;
             }
 
             // If we have actually got a logger program, we can allow user to control it
@@ -164,6 +198,8 @@ namespace personali_raport
                 loggerErrorLabel.Text = "Viga: puudub vajalik programm, et ID-kaardi andmeid koguda.";
                 loggerErrorLabel.Visible = true;
             }
+
+            UpdateValidity();
         }
 
         /// <summary>
@@ -177,18 +213,110 @@ namespace personali_raport
         /// </summary>
         private void UpdateValidity()
         {
+            // Update "Ava põhi" button:
+            // If there's stored template for PERSREP / ATTENDANCE, don't allow picking template.
+            if (settings.reportType == ReportType.PERSREP && storedPersrepTemplate != null)
+            {
+                Debug.Print("UX update: PERSREP selected and stored template not null");
+                button1.Enabled = false;
+            }
+            else if (settings.reportType == ReportType.ATTENDANCE && storedAttendanceTemplate != null)
+            {
+                Debug.Print("UX update: ATTENDANCE selected and stored template not null");
+                button1.Enabled = false;
+            }
+            else
+            {
+                Debug.Print("UX update: {0} selected and template is missing, allowing to open file", settings.reportType == ReportType.PERSREP ? "PERSREP" : "ATTENDANCE");
+                button1.Enabled = true;
+            }
+
+            // Database related UX: 
+            // Hide the database section & disable open DB button when DB is loaded
+            // Allow collecting logs and hide the errors when DB is loaded
+            if (conn.State == System.Data.ConnectionState.Open)
+            {
+                Debug.Print("UX update: DB open, allowing DB functionality");
+                openDatabaseButton.Enabled = false;
+                groupBox2.Visible = false;
+
+                databaseConnectionErrorMsg.Visible = false;
+
+                startDataCollectionBtn.Enabled = true;
+
+                tabControl1.Enabled = true;
+            } else
+            {
+                Debug.Print("UX update: DB closed, disabling DB functionality");
+                openDatabaseButton.Enabled = true;
+                groupBox2.Visible = true;
+
+                startDataCollectionBtn.Enabled = false;
+
+                tabControl1.Enabled = false;
+            }
+
+            // Update "Generate report" button: 
+            // If the start & end time are not null and the template file exists, allow generating
             if (settings.startOfReport != null &&
                 settings.endOfReport != null &&
                 settings.reportTemplate != null && File.Exists(settings.reportTemplate))
             {
+                Debug.Print("UX update: All OK for report, allowing generation");
                 generatePersrepBtn.Enabled = true;
             }
             else
             {
+                Debug.Print("UX update: Report times invalid OR report template missing, not allowing generate report");
                 generatePersrepBtn.Enabled = false;
             }
 
-            progressStatusLabel.Text = "";
+            // Report loading UX:
+            // While a report is loading, show "Koostan..." and disable the button
+            if (reportLoading)
+            {
+                Debug.Print("UX update: report loading!");
+                generatePersrepBtn.Visible = true;
+                generatePersrepBtn.Enabled = false;
+                saveReportButton.Visible = false;
+                generatePersrepBtn.Text = "Koostan...";
+            }
+            else
+            {
+                Debug.Print("UX update: Report not loading!");
+                generatePersrepBtn.Visible = false;
+                generatePersrepBtn.Enabled = true;
+                saveReportButton.Visible = true;
+                generatePersrepBtn.Text = "Alusta >>>";
+            }
+
+            // Report Ready UX: 
+            // When a report is ready, hide the Generate button and instead show the Save button.
+            if (reportReady)
+            {
+                Debug.Print("UX update: report ready!");
+                generatePersrepBtn.Visible = false;
+                saveReportButton.Visible = true;
+                saveReportButton.Enabled = true;
+            } else
+            {
+                Debug.Print("UX update: report not ready!");
+                generatePersrepBtn.Visible = true;
+                saveReportButton.Visible = false;
+                saveReportButton.Enabled = false;
+            }
+
+
+
+            if (hasIDReaderBackend)
+            {
+                Debug.Print("UX update: ID reader backend found!");
+                startDataCollectionBtn.Enabled = true;
+            } else
+            {
+                Debug.Print("UX update: ID reader backend missing!");
+                startDataCollectionBtn.Enabled = false;
+            }
         }
 
         /// <summary>
@@ -202,6 +330,8 @@ namespace personali_raport
             {
                 reportWriter.CloseExcel();
             }
+
+            DestroyAllExcel();
         }
 
         /// <summary>
@@ -214,72 +344,47 @@ namespace personali_raport
         {
             Debug.Assert(conn != null, "Database connection was null in GenerateReport()");
             Debug.Assert(personnelReader != null, "personnel reader not initialized in generateReport()");
-            ILogReader cardLogReader = new AccessLogReader(conn);
-            List<Person> logEntries = new List<Person>();
-            List<Person> unknownPeople = new List<Person>();
 
-            settings.startOfReport = dataSelectionStartDate.Value;
-            settings.endOfReport = dataSelectionEndDate.Value;
+            reportReady = false;
+            reportLoading = true;
+            UpdateValidity();
 
-            int entriesNotRecognized = 0;
-            foreach (CardLogEntry row in cardLogReader.ReadAllCardsInTimespan(settings.startOfReport, settings.endOfReport))
+
+            if (timeFilterEnabledCheckbox.Checked)
             {
-
-                if (row == null)
-                {
-                    Debug.Print("Did not receive a valid row in GenerateReport() :(");
-                    continue;
-                }
-                Debug.Print("Processing person with ID code {0}", row.idCode.ToString());
-
-                // null if no person was found
-                Person foundPerson = personnelReader.ReadPersonalData(row.idCode.ToString());
-
-                if (foundPerson == null)
-                {
-                    Debug.Print("Unknown person, adding to unknown list", row.idCode);
-
-                    var p = new Person() { idCode = row.idCode.ToString() };
-                    p.data["Eesnimi"] = row.firstName;
-                    p.data["Perekonnanimi"] = row.lastName;
-                    unknownPeople.Add(p);
-
-                    entriesNotRecognized++;
-                    continue;
-                }
-
-                foundPerson.signedInOn = row.datetime;
-                logEntries.Add(foundPerson);
+                settings.startOfReport = dataSelectionStartDate.Value;
+                settings.endOfReport = dataSelectionEndDate.Value;
+            } else
+            {
+                settings.startOfReport = DateTime.MinValue;
+                settings.endOfReport = DateTime.MaxValue; 
             }
 
-            progressStatusLabel.Text = String.Format("Edukalt loetud {0} kirjet.", logEntries.Count);
-            if (entriesNotRecognized > 0)
-            {
-                progressStatusLabel.Text += String.Format(" Ei suutnud tuvastada {0} kirjet.", entriesNotRecognized);
-            }
-            Debug.Print("Found {0} entries (and {1} were not translated to persons)", logEntries.Count, entriesNotRecognized);
-            
             if (reportWriter != null)
             {
                 reportWriter.CloseExcel();
                 reportWriter = null;
             }
 
+            if (!File.Exists(settings.reportTemplate))
+            {
+                Debug.Print("Report template missing. {0}", settings.reportTemplate);
+                return;
+            }
+
             if (settings.reportType == ReportType.PERSREP)
             {
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
+                reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport));
             } else if (settings.reportType == ReportType.ATTENDANCE)
             {
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
-            } 
-            
-            reportWriter.WriteReport(logEntries);
-            if (unknownPeople.Count > 0)
-            {
-                reportWriter.HandleUnknownPeople(unknownPeople);
+                reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport));
             }
 
-            saveReportButton.Enabled = true;
+            reportReady = true;
+            reportLoading = false;
+            UpdateValidity();
         }
 
         /// <summary>
@@ -290,6 +395,12 @@ namespace personali_raport
         static string GetConnectionString(string filename)
         {
             return String.Format("Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0}", filename);
+        }
+
+        private void OpenTreeReport()
+        {
+            var tree = new TreeReport(cardLogReader);
+            tree.Show();
         }
 
         #region Form Event Handlers
@@ -328,7 +439,10 @@ namespace personali_raport
             {
                 progressStatusLabel.Text = "Salvestan...";
                 reportWriter.SaveFile(sfd.FileName);
-                progressStatusLabel.Text = "Raport on salvestatud! Vali veel andmeid või teist tüüpi mall.";
+                progressStatusLabel.Text = "Raport on salvestatud!";
+                reportReady = false;
+
+                UpdateValidity();
             }
         }
         private void timeFilterEnabledCheckbox_CheckedChanged(object sender, EventArgs e)
@@ -352,13 +466,11 @@ namespace personali_raport
                 if (storedPersrepTemplate != null)
                 {
                     settings.reportTemplate = storedPersrepTemplate;
-                    button1.Enabled = false;
-                    generatePersrepBtn.Enabled = true;
-                } else
-                {
-                    button1.Enabled = true;
                 }
+
+                reportReady = false;
                 Debug.Print("Report type is now PERSREP");
+                UpdateValidity();
             }
         }
         private void reportOptionAttendance_CheckedChanged(object sender, EventArgs e)
@@ -369,17 +481,12 @@ namespace personali_raport
                 if (storedAttendanceTemplate != null)
                 {
                     settings.reportTemplate = storedAttendanceTemplate;
-                    button1.Enabled = false;
-                    generatePersrepBtn.Enabled = true;
-                } else
-                {
-                    button1.Enabled = true;
                 }
+                reportReady = false;
                 Debug.Print("Report type is now Attendance");
+                UpdateValidity();
             }
         }
-
-
         private void openDatabaseButton_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
@@ -389,9 +496,10 @@ namespace personali_raport
             {
                 storedSettings.Write("AccessDatabase", ofd.FileName);
                 openDatabase(ofd.FileName);
+
+                UpdateValidity();
             }
         }
-
         private void openDatabase(string databaseFileName)
         {
             try
@@ -401,30 +509,24 @@ namespace personali_raport
                 writer = new AccessWriter(conn);
                 pmReader = new PersonMessageReader(conn);
                 personnelReader = new AccessPersonnelReader(conn);
-
+                cardLogReader = new AccessLogReader(conn);
                 Debug.Print("Database connected to: " + databaseFileName);
-                databaseConnectionErrorMsg.Visible = false;
-                openDatabaseButton.Enabled = false;
-                startDataCollectionBtn.Enabled = true;
-                tabControl1.Enabled = true;
             }
             catch (InvalidOperationException ex)
             {
                 Debug.Print(ex.ToString());
-                openDatabaseButton.Enabled = false;
                 databaseConnectionErrorMsg.Visible = true;
                 databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-                tabControl1.Enabled = false;
             }
             catch (OleDbException ex)
             {
                 Debug.Print(ex.ToString());
                 databaseConnectionErrorMsg.Visible = true;
                 databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-                tabControl1.Enabled = false;
             }
-        }
 
+            UpdateValidity();
+        }
         private void startDataCollectionBtn_Click(object sender, EventArgs e)
         {
             Debug.Assert(writer != null, "Database writer was null during start data collection");
@@ -433,8 +535,6 @@ namespace personali_raport
             idCollectorForm = new IDCollectorForm(writer, pmReader, personnelReader);
             idCollectorForm.Show();
         }
-        #endregion
-
         private void button1_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog() { Filter = "Excel worksheets|*.xls;*.xlsx" };
@@ -449,15 +549,16 @@ namespace personali_raport
                 {
                     storedSettings.Write("AttendanceTemplate", ofd.FileName);
                 }
-                button1.Enabled = false;
                 UpdateValidity();
             }
         }
-
-        private void tabPage2_Click(object sender, EventArgs e)
+        private void tabPage2_Click(object sender, EventArgs e) {}
+        private void hetkeseisBtn_Click(object sender, EventArgs e)
         {
-
+            OpenTreeReport();
         }
+        #endregion
+
     }
 }
 

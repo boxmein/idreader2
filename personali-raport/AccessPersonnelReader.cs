@@ -81,9 +81,6 @@ namespace personali_raport
                         reader.Read();
                         string firstName = reader.GetString(reader.GetOrdinal(FIRST_NAME_FIELD));
                         string lastName = reader.GetString(reader.GetOrdinal(LAST_NAME_FIELD));
-                        string kkv = reader.GetString(reader.GetOrdinal(KKV_FIELD)); // Kaitseväekohuslane / reservohvitser
-                        string rank = reader.GetString(reader.GetOrdinal(RANK_FIELD)); // Auaste
-                        string position = reader.GetString(reader.GetOrdinal(POSITION_FIELD)); // Ametikoht
                         string company = reader.GetString(reader.GetOrdinal(COMPANY_FIELD)); // Kompanii
                         string platoon = reader.GetString(reader.GetOrdinal(PLATOON_FIELD)); // Rühm
                         int kutse = reader.GetInt32(reader.GetOrdinal(KUTSE_FIELD)); // Kutse

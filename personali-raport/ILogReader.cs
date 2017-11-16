@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 
 namespace personali_raport
 {
-    interface ILogReader
+    public interface ILogReader
     {
         IEnumerable<CardLogEntry> ReadAllCardsInTimespan(DateTime start, DateTime end);
+        List<PersrepItem> ReadPersrepData(DateTime start, DateTime end);
+        List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string ryhm = null);
+        List<Person> ReadTreeViewData(DateTime start, DateTime end);
     }
 }

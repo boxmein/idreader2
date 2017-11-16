@@ -96,5 +96,20 @@ namespace personali_raport
                        entry.datetime <= end;
             });
         }
+
+        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string ryhm = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<Person> ReadTreeViewData(DateTime start, DateTime end)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

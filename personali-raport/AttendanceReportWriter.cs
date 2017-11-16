@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Office.Interop.Excel;
 using System.Linq;
 using System.Diagnostics;
-
+using System.Reflection;
 
 namespace personali_raport
 {
@@ -14,10 +14,6 @@ namespace personali_raport
 
         const string NAME_COL = "B";
         const string RANK_COL = "C";
-
-        const string FIRST_NAME = "Eesnimi";
-        const string LAST_NAME = "Perekonnanimi";
-        const string PLATOON = "Ryhm";
         
         Worksheet worksheet;
         Workbook workbook;
@@ -50,14 +46,14 @@ namespace personali_raport
             return true;
         }
 
-        public bool WriteReport(List<Person> personnel)
+        public bool WriteReport(List<AttendanceItem> personnel)
         {
             
             currentRow = START_ROW;
             foreach (var person in personnel)
             {
-                SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
-                SetValueToCell(currentRow, RANK_COL, person.data[PLATOON]);
+                SetValueToCell(currentRow, NAME_COL, person.name);
+                SetValueToCell(currentRow, RANK_COL, person.platoon);
                 currentRow += 1;
             }
             return true;
@@ -89,6 +85,7 @@ namespace personali_raport
         {
             try
             {
+                workbook.Close(false, Missing.Value, Missing.Value);
                 excelApp.Quit();
             }
             catch (Exception)
@@ -97,21 +94,10 @@ namespace personali_raport
             }
         }
 
-
-        /// <summary>
-        /// Should add unknown people to the attendance report. Doesn't add them to the attendance report.
-        /// </summary>
-        /// <param name="unknownPeople"></param>
-        /// <returns>true</returns>
-        public bool HandleUnknownPeople(List<Person> unknownPeople)
+        public bool WriteReport(List<PersrepItem> personnel)
         {
-            foreach (var person in unknownPeople)
-            {
-                SetValueToCell(currentRow, NAME_COL, person.data[FIRST_NAME] + " " + person.data[LAST_NAME]);
-                SetValueToCell(currentRow, RANK_COL, "Üksuse tabelis ei olnud: " + person.idCode);
-                currentRow += 1;
-            }
-            return true;
+            Debug.Write("AttendanceReportWriter cannot use PersrepItems");
+            throw new NotImplementedException();
         }
     }
 }

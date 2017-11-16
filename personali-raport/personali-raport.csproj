@@ -136,6 +136,12 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings1.settings</DependentUpon>
     </Compile>
+    <Compile Include="TreeReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TreeReport.Designer.cs">
+      <DependentUpon>TreeReport.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -154,6 +160,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="TreeReport.resx">
+      <DependentUpon>TreeReport.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="keyfile.pfx" />
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
