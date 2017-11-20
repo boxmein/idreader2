@@ -76,12 +76,14 @@ namespace personali_raport
         /// <param name="personnel">The people that this report will include.</param>
         public bool WriteReport(List<PersrepItem> personnelCounts)
         {
+            if (personnelCounts.Count == 0)
+            {
+                MessageBox.Show("Persrepi jaoks ei leitud ühtki inimest.", "Raporti ei saanud koostada");
+                return false;
+            }
 
             // 
             // Count groups, make sure we have enough Excel cell groups to cover them all
-            // int personnelGroupCount = personnelByGroup.Keys.Count;
-            
-            
             if (personnelCounts.Count > PERSREP_MAX_GROUPS)
             {
                 if (MessageBox.Show("Kogutud andmetes esineb üle 14 allüksuse liikmeid. Laiendan malli allapoole, kuid siis tuleb lõpus üldsummade funktsioonid käsitsi ümber muuta.\r\n\r\nVajuta OK et jätkata ja Cancel et lõpetada.", "Viga malli täitmisel", MessageBoxButtons.OKCancel) != DialogResult.OK)
@@ -105,8 +107,6 @@ namespace personali_raport
                     donorRows.Copy(worksheet.Range[('A' + (94 + i * PERSREP_GROUP_SIZE)).ToString(),('J' + (94 + (i + 1) * PERSREP_GROUP_SIZE)).ToString()]);
                 }
             }
-            
-
             //
             // Walk over each personnel group and write data into their group cells
             int currentGroup = 0;

@@ -408,7 +408,7 @@ namespace personali_raport
         /// <seealso cref="IReportWriter"/>
         /// <seealso cref="PersrepReportWriter"/>
         /// <seealso cref="AttendanceReportWriter"/>
-        private void GenerateReport()
+        private bool GenerateReport()
         {
             Debug.Assert(conn != null, "Database connection was null in GenerateReport()");
             Debug.Assert(personnelReader != null, "personnel reader not initialized in generateReport()");
@@ -439,7 +439,7 @@ namespace personali_raport
             if (!File.Exists(settings.reportTemplate))
             {
                 Debug.Print("Report template missing. {0}", settings.reportTemplate);
-                return;
+                return false;
             }
 
             // Support J1 and J2 filters
@@ -462,15 +462,17 @@ namespace personali_raport
                 settings.filter = companyFilter.Text;
             }
 
+            bool success = false;
+
 
             if (settings.reportType == ReportType.PERSREP)
             {
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
-                reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
+                success = reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
             } else if (settings.reportType == ReportType.ATTENDANCE)
             {
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
-                reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
+                success = reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
             }
 
             // Collect unknown people if no other filters than time are enabled
@@ -484,6 +486,8 @@ namespace personali_raport
             reportLoading = false;
             settings.filter = null;
             UpdateValidity();
+
+            return success;
         }
 
         /// <summary>
@@ -539,8 +543,10 @@ namespace personali_raport
                 return;
             }
 
-            GenerateReport();
-            saveReportButton_Click(null, null);
+            if (GenerateReport())
+            {
+                saveReportButton_Click(null, null);
+            };
         }
 
         private void openDatabase(string databaseFileName)

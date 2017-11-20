@@ -34,7 +34,7 @@ namespace personali_raport
             startTime.Value = DateTime.Today - TimeSpan.FromDays(1);
         }
 
-        public void SetPersonnel(List<Person> personnel)
+        public void SetPersonnel(List<Person> personnel, List<Person> unknownPeople = null)
         {
             unitTree.BeginUpdate();
             unitTree.Nodes.Clear();
@@ -67,6 +67,15 @@ namespace personali_raport
                 }
             }
 
+            // Teadmata inimeste jaoks on viimane haru
+            if (unknownPeople != null && unknownPeople.Count > 0) {
+                var unknownNode = unitTree.Nodes.Add("Teadmata");
+                foreach (var person in unknownPeople)
+                {
+                    unknownNode.Nodes.Add(person.data[FIRST_NAME_FIELD] + " " + person.data[LAST_NAME_FIELD] + " - " + person.idCode);
+                }
+            }
+
             unitTree.EndUpdate();
         }
 
@@ -81,7 +90,9 @@ namespace personali_raport
             DateTime start = startTime.Value;
             DateTime end = endTime.Value;
             showTree.Enabled = false;
-            SetPersonnel(reader.ReadTreeViewData(start, end));
+            SetPersonnel(
+                reader.ReadTreeViewData(start, end), 
+                reader.ReadUnknownPeople(startTime.Value, endTime.Value));
         }
 
         /// <summary>
@@ -96,7 +107,9 @@ namespace personali_raport
             startTime.Value = start;
             endTime.Value = end;
 
-            SetPersonnel(reader.ReadTreeViewData(startTime.Value, endTime.Value));
+            SetPersonnel(
+                reader.ReadTreeViewData(startTime.Value, endTime.Value), 
+                reader.ReadUnknownPeople(startTime.Value, endTime.Value));
         }
 
         public DateTime StartDate {
@@ -144,6 +157,12 @@ namespace personali_raport
                     return;
                 }
 
+                if (unitTree.SelectedNode.Parent.Text == "Teadmata")
+                {
+                    Debug.Print("Unknown people can't be reported individually.");
+                    return;
+                }
+
                 // User selected kompanii
                 if (unitTree.SelectedNode.Parent == null)
                 {
@@ -183,6 +202,13 @@ namespace personali_raport
                 generateAttendanceReport.Enabled = false;
                 return;
             }
+
+            if (unitTree.SelectedNode.Parent.Text == "Teadmata")
+            {
+                Debug.Print("User selected a person in the unknowns list.");
+                return;
+            }
+
 
             // User selected person
             if (unitTree.SelectedNode.Parent.Parent != null)

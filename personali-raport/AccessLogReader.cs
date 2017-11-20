@@ -156,21 +156,27 @@ namespace personali_raport
         /// </summary>
         private string ComposePersrepQuery(bool hasCompanyFilter, bool hasj1Filter, bool hasj2Filter)
         {
-            return "SELECT " + (hasCompanyFilter ? "Yksus.Ryhm" : "Yksus.Kompanii") + @",
-                        SUM(IIF(Yksus.KKV='O',1,0)) AS Ohvitsere,
-                        SUM(IIF(Yksus.KKV='AO',1,0)) AS Allohvitsere,
-                        SUM(IIF(Yksus.KKV='S',1,0)) AS Sodureid,
-                        SUM(IIF(Yksus.KKV='TSIV',1,0)) AS Tsiviliste
-                    FROM Yksus
-                    INNER JOIN (SELECT Isikukood, FIRST(Kellaaeg) FROM Logi WHERE Kellaaeg >= @start AND Kellaaeg <= @end GROUP BY Isikukood) Logi2
-                        ON Logi2.Isikukood = Yksus.Isikukood
-                    WHERE Logi2.Kellaaeg >= @start 
-                        AND Logi2.Kellaaeg <= @end"
-                    + (hasCompanyFilter ? " AND Yksus2.Kompanii = @company" : "")
-                    + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
-                    + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
-                    + " GROUP BY " 
-                    + (hasCompanyFilter ? "Yksus.Ryhm" : "Yksus.Kompanii") + ";";
+            return "SELECT " + (hasCompanyFilter ? "Logi2.Ryhm" : "Logi2.Kompanii") + @",
+                        SUM(IIF(Yksus.KKV = 'O', 1, 0)) AS Ohvitsere,
+                        SUM(IIF(Yksus.KKV = 'AO', 1, 0)) AS Allohvitsere,
+                        SUM(IIF(Yksus.KKV = 'S', 1, 0)) AS Sodureid,
+                        SUM(IIF(Yksus.KKV = 'TSIV', 1, 0)) AS Tsiviliste
+                    FROM (SELECT
+                                Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi,
+                                Yksus.Kompanii, Yksus.Ryhm, Yksus.KKV, COUNT(Logi.Kellaaeg) AS Kohal
+                            FROM Yksus
+                            LEFT OUTER JOIN Logi
+                                ON Logi.Isikukood = Yksus.Isikukood
+                            WHERE Logi.Kellaaeg >= @start
+                              AND Logi.Kellaaeg <= @end
+                              " + (hasCompanyFilter ? " AND Yksus.Kompanii = @company" : "")
+                                + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
+                                + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                    +    @" GROUP BY Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi,
+                                    Yksus.Kompanii, Yksus.Ryhm, Yksus.Ametikoht, Yksus.KKV
+                            ORDER BY Yksus.Kompanii, Yksus.Ryhm ASC) Logi2 
+                    WHERE Logi2.Kohal > 0 
+                    GROUP BY " + (hasCompanyFilter ? "Logi2.Ryhm" : "Logi2.Kompanii") + ";";
         }
 
         /// <summary>
@@ -178,16 +184,17 @@ namespace personali_raport
         /// </summary>
         private string ComposeAttendanceQuery(bool hasPlatoonFilter, bool hasj1Filter, bool hasj2Filter)
         {
-            return @"SELECT Yksus.Eesnimi & ' ' & Yksus.Perekonnanimi AS Nimi, Yksus.Ryhm 
-                        FROM Yksus
-                        INNER JOIN (SELECT Isikukood, FIRST(Kellaaeg) AS Kell FROM Logi WHERE Kellaaeg >= @start AND Kellaaeg <= @end GROUP BY Isikukood) Logi2
-                            ON Logi2.Isikukood = Yksus.Isikukood
-                        WHERE Logi2.Kell >= @start
-                            AND Logi2.Kell <= @end"
-                        + (hasPlatoonFilter ? " AND Yksus.Ryhm = @platoon" : "")
-                        + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
-                        + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
-                        + " ORDER BY Logi2.Kell ASC";
+            return @"SELECT 
+                        Yksus.Eesnimi, Yksus.Perekonnanimi, Yksus.Ryhm
+                    FROM Yksus
+                    INNER JOIN Logi
+                        ON Logi.Isikukood = Yksus.Isikukood
+                    WHERE Logi.Kellaaeg >= @start 
+                      AND Logi.Kellaaeg <= @end"
+                    + (hasPlatoonFilter ? " AND Yksus.Ryhm = @platoon" : "") 
+                    + (hasj1Filter ? " AND Yksus.J1 = @j1" : "") 
+                    + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                    + " ORDER BY Logi.Kellaaeg ASC;";
         }
 
         /// <summary>
@@ -223,12 +230,6 @@ namespace personali_raport
 
             cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
             cursor.Parameters[1].Value = end;
-
-            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
-            cursor.Parameters[2].Value = start;
-
-            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
-            cursor.Parameters[3].Value = end;
 
             if (companyFilter != null)
             {
@@ -327,22 +328,17 @@ namespace personali_raport
 
             cursor.CommandText = ComposeAttendanceQuery(platoonFilter != null, j1Filter != null, j2Filter != null);
 
-            Debug.Print(cursor.CommandText);
-            Debug.Print("platoon filter: {0}", platoonFilter);
-            Debug.Print("j1 filter: {0}", j1Filter);
-            Debug.Print("j2 filter: {0}", j2Filter);
+            Debug.Print("ReadAttendanceData: {0}", cursor.CommandText);
+            Debug.Print("ReadAttendanceData: Start: {0}, End: {1} ", start, end);
+            Debug.Print("ReadAttendanceData: platoon filter: {0}", platoonFilter);
+            Debug.Print("ReadAttendanceData: j1 filter: {0}", j1Filter);
+            Debug.Print("ReadAttendanceData: j2 filter: {0}", j2Filter);
 
             cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
             cursor.Parameters[0].Value = start;
 
             cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
             cursor.Parameters[1].Value = end;
-
-            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
-            cursor.Parameters[2].Value = start;
-
-            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
-            cursor.Parameters[3].Value = end;
 
             var data = new List<AttendanceItem>();
 
@@ -403,8 +399,15 @@ namespace personali_raport
             {
                 while (reader.Read())
                 {
-                    string name = reader.GetString(reader.GetOrdinal("Nimi"));
+                    string name = reader.GetString(reader.GetOrdinal("Eesnimi")) + " " + reader.GetString(reader.GetOrdinal("Perekonnanimi"));
                     string platoon = reader.GetString(reader.GetOrdinal("Ryhm"));
+
+                    if (data.Exists((item) => item.name == name))
+                    {
+                        Debug.Print("{0} on juba nimekirjas", name);
+                        continue;
+                    }
+
                     data.Add(new AttendanceItem()
                     {
                         name = name,
@@ -490,7 +493,6 @@ namespace personali_raport
             }
             return data;
         }
-
         public List<Person> ReadUnknownPeople(DateTime start, DateTime end)
         {
             Debug.Assert(start != null, "ReadUnknownPeople: start time was null");
@@ -550,6 +552,7 @@ namespace personali_raport
                     p.data.Add("Eesnimi", firstName);
                     p.data.Add("Perekonnanimi", lastName);
                     p.data.Add("Isikukood", idCode);
+                    p.idCode = idCode;
                     data.Add(p);
                 }
             }
@@ -560,7 +563,6 @@ namespace personali_raport
             }
             return data;
         }
-
     }
 
     /// <summary>

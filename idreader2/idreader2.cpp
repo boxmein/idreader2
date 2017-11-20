@@ -106,29 +106,9 @@ void sCardReaderThread() {
 	time_t currentTimet;
 	tm currentTime;
 
-	/// File handle for output
-	std::wofstream outputFile;
-
-	/// Reader states
-	std::wofstream outputLog;
-
 	// 0. open files for output
 	currentTimet = time(0);
 	localtime_s(&currentTime, &currentTimet);
-	
-	wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"logi-%Y-%m-%d-%H-%M-%S.txt", &currentTime);
-	outputLog.open(szFormatBuffer, std::ios_base::app);
-
-	wcsftime(szFormatBuffer, FORMAT_BUFFER_SIZE, L"%Y-%m-%d %H:%M:%S %z", &currentTime);
-
-	// enable throwing on the failbit
-	outputFile.exceptions(std::ios::badbit | std::ios::failbit);
-	outputLog.exceptions(std::ios::badbit | std::ios::failbit);
-
-	if (!outputLog.is_open()) {
-		wcerr << "3002 Ei suutnud avada vealogide faili." << endl;
-		goto teardown;
-	}
 
 	wcout << "0 === Alustan logimist: " << szFormatBuffer << L" ===" << endl;
 
@@ -395,8 +375,6 @@ void sCardReaderThread() {
 	}
 teardown:
 	free(idCodeBuffer);
-	outputFile.close();
-	outputLog.close();
 	wcout << L"1 Töö lõpetatud.";
 	return;
 }

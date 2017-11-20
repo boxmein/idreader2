@@ -22,7 +22,7 @@ namespace personali_raport
         Workbook workbook;
         Application excelApp;
 
-        int currentRow = 0;
+        int currentRow = 1;
 
         /// <summary>
         /// Instantiates a new PersrepReportWriter along with opening the report 
@@ -52,6 +52,11 @@ namespace personali_raport
 
         public bool WriteReport(List<AttendanceItem> personnel)
         {
+            if (personnel.Count == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("Kohalolekukontrolli koostamise jaoks ei leitud logidest ühtki sobivat tulemust.", "Raporti ei saanud koostada");
+                return false;
+            }
             
             currentRow = START_ROW;
             foreach (var person in personnel)
