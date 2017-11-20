@@ -45,6 +45,9 @@
             this.dataSelectionEndDate = new System.Windows.Forms.DateTimePicker();
             this.dataSelectionStartDate = new System.Windows.Forms.DateTimePicker();
             this.timeFilterGroupBox = new System.Windows.Forms.GroupBox();
+            this.j2Filter = new System.Windows.Forms.NumericUpDown();
+            this.label1 = new System.Windows.Forms.Label();
+            this.j1Filter = new System.Windows.Forms.NumericUpDown();
             this.companyFilter = new System.Windows.Forms.ComboBox();
             this.progressStatusLabel = new System.Windows.Forms.Label();
             this.companyFilterEnabled = new System.Windows.Forms.CheckBox();
@@ -62,17 +65,14 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.hetkeseisBtn = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.label1 = new System.Windows.Forms.Label();
-            this.j1Filter = new System.Windows.Forms.NumericUpDown();
-            this.j2Filter = new System.Windows.Forms.NumericUpDown();
             this.timeFilterGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).BeginInit();
             this.reportCreatorGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).BeginInit();
             this.SuspendLayout();
             // 
             // startDataCollectionBtn
@@ -203,6 +203,41 @@
             this.timeFilterGroupBox.TabStop = false;
             this.timeFilterGroupBox.Text = "Filtreerimine";
             // 
+            // j2Filter
+            // 
+            this.j2Filter.Location = new System.Drawing.Point(291, 164);
+            this.j2Filter.Maximum = new decimal(new int[] {
+            99999,
+            0,
+            0,
+            0});
+            this.j2Filter.Name = "j2Filter";
+            this.j2Filter.Size = new System.Drawing.Size(101, 34);
+            this.j2Filter.TabIndex = 20;
+            this.j2Filter.ValueChanged += new System.EventHandler(this.j2Filter_ValueChanged);
+            // 
+            // label1
+            // 
+            this.label1.BackColor = System.Drawing.SystemColors.Control;
+            this.label1.Location = new System.Drawing.Point(17, 262);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(388, 43);
+            this.label1.TabIndex = 2;
+            // 
+            // j1Filter
+            // 
+            this.j1Filter.Location = new System.Drawing.Point(104, 164);
+            this.j1Filter.Maximum = new decimal(new int[] {
+            99999,
+            0,
+            0,
+            0});
+            this.j1Filter.Name = "j1Filter";
+            this.j1Filter.Size = new System.Drawing.Size(101, 34);
+            this.j1Filter.TabIndex = 19;
+            this.j1Filter.ValueChanged += new System.EventHandler(this.j1Filter_ValueChanged);
+            // 
             // companyFilter
             // 
             this.companyFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -211,6 +246,7 @@
             this.companyFilter.Name = "companyFilter";
             this.companyFilter.Size = new System.Drawing.Size(185, 37);
             this.companyFilter.TabIndex = 18;
+            this.companyFilter.SelectedIndexChanged += new System.EventHandler(this.companyFilter_SelectedIndexChanged);
             // 
             // progressStatusLabel
             // 
@@ -415,39 +451,6 @@
             this.tabPage2.Text = "Rapordid";
             this.tabPage2.Click += new System.EventHandler(this.tabPage2_Click);
             // 
-            // label1
-            // 
-            this.label1.BackColor = System.Drawing.SystemColors.Control;
-            this.label1.Location = new System.Drawing.Point(17, 262);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(388, 43);
-            this.label1.TabIndex = 2;
-            // 
-            // j1Filter
-            // 
-            this.j1Filter.Location = new System.Drawing.Point(104, 164);
-            this.j1Filter.Maximum = new decimal(new int[] {
-            99999,
-            0,
-            0,
-            0});
-            this.j1Filter.Name = "j1Filter";
-            this.j1Filter.Size = new System.Drawing.Size(101, 34);
-            this.j1Filter.TabIndex = 19;
-            // 
-            // j2Filter
-            // 
-            this.j2Filter.Location = new System.Drawing.Point(291, 164);
-            this.j2Filter.Maximum = new decimal(new int[] {
-            99999,
-            0,
-            0,
-            0});
-            this.j2Filter.Name = "j2Filter";
-            this.j2Filter.Size = new System.Drawing.Size(101, 34);
-            this.j2Filter.TabIndex = 20;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -464,14 +467,14 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.timeFilterGroupBox.ResumeLayout(false);
             this.timeFilterGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).EndInit();
             this.reportCreatorGroupBox.ResumeLayout(false);
             this.reportCreatorGroupBox.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).EndInit();
             this.ResumeLayout(false);
 
         }

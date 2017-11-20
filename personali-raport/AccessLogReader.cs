@@ -364,7 +364,7 @@ namespace personali_raport
                 Debug.Print("Using J2 filter in attendance");
                 var param = new OleDbParameter("@j2", OleDbType.Integer);
                 param.Value = j2Filter;
-                cursor.Parameters.Add(j2Filter);
+                cursor.Parameters.Add(param);
             }
 
             CardLogEntry entry = null;

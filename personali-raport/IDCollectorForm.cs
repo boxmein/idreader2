@@ -106,6 +106,7 @@ namespace personali_raport
         /// Creates a new Process and starts it to collect ID cards.
         /// </summary>
         public void startCollector()
+
         {
             Debug.Print("Start data collection!");
             loggerScannedCount = 0;

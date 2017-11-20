@@ -95,6 +95,11 @@ namespace personali_raport
         /// </summary>
         bool reportLoading = false;
 
+        /// <summary>
+        /// Have the parameters been changed?
+        /// </summary>
+        bool parametersChanged = false;
+
 
         event EventHandler<OleDbConnection> DatabaseConnected;
 
@@ -337,6 +342,15 @@ namespace personali_raport
                 generatePersrepBtn.Enabled = false;
                 saveReportButton.Visible = false;
                 generatePersrepBtn.Text = "Koostan...";
+            } else if (parametersChanged)
+            {
+                Debug.Print("Parameters changed");
+                generatePersrepBtn.Visible = true;
+                generatePersrepBtn.Enabled = true;
+                saveReportButton.Visible = false;
+                generatePersrepBtn.Text = "Alusta >>>";
+                parametersChanged = false;
+                reportReady = false;
             }
             else
             {
@@ -381,7 +395,10 @@ namespace personali_raport
             j2Filter.Enabled = j2FilterEnabled.Checked;
 
             // Is company filter enabled? If so, enable the company filter dropdown.
-            companyFilter.Enabled = companyFilterEnabled.Checked;
+            companyFilter.Enabled = settings.reportType == ReportType.PERSREP && companyFilterEnabled.Checked;
+
+            // If the report type is PERSREP, allow Kompanii filtering.
+            companyFilterEnabled.Enabled = settings.reportType == ReportType.PERSREP;
         }
 
         /// <summary>
@@ -457,7 +474,7 @@ namespace personali_raport
             } 
 
             // Support Company filter
-            if (companyFilterEnabled.Checked && settings.filter == null)
+            if (companyFilterEnabled.Enabled && companyFilterEnabled.Checked && settings.filter == null)
             {
                 settings.filter = companyFilter.Text;
             }
@@ -577,10 +594,14 @@ namespace personali_raport
         private void dataSelectionStartDate_ValueChanged(object sender, EventArgs e)
         {
             settings.startOfReport = dataSelectionStartDate.Value;
+            parametersChanged = true;
+            UpdateValidity();
         }
         private void dataSelectionEndDate_ValueChanged(object sender, EventArgs e)
         {
             settings.endOfReport = dataSelectionEndDate.Value;
+            parametersChanged = true;
+            UpdateValidity();
         }
         private void generatePersrepBtn_Click(object sender, EventArgs e)
         {
@@ -627,6 +648,9 @@ namespace personali_raport
                 settings.startOfReport = DateTime.MinValue;
                 settings.endOfReport = DateTime.MaxValue;
             }
+
+            parametersChanged = true;
+            UpdateValidity();
         }
         private void reportOptionPersrep_CheckedChanged(object sender, EventArgs e)
         {
@@ -705,17 +729,38 @@ namespace personali_raport
         }
         private void j1FilterEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            parametersChanged = true;
             UpdateValidity();
         }
         private void j2FilterEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            parametersChanged = true;
             UpdateValidity();
         }
         private void companyFilterEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            parametersChanged = true;
             UpdateValidity();
         }
         #endregion
+
+        private void j1Filter_ValueChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
+
+        private void j2Filter_ValueChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
+
+        private void companyFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
     }
 }
 
