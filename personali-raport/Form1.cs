@@ -62,6 +62,11 @@ namespace personali_raport
         /// Uses the AccessWriter and PersonMessageReader.
         /// </summary>
         IDCollectorForm idCollectorForm;
+
+        /// <summary>
+        /// A form that shows the tree view (hetkeseis) to the user.
+        /// </summary>
+        TreeReport treeReportForm;
         
         /// <summary>
         /// The MS Access DB connection used to read and write. Created by the user when they open the database file.
@@ -89,6 +94,10 @@ namespace personali_raport
         /// Is the report currently being generated?
         /// </summary>
         bool reportLoading = false;
+
+
+        event EventHandler<OleDbConnection> DatabaseConnected;
+
         /// <summary>
         /// Constructs the Form.
         /// Initializes the ReportSettings object.
@@ -110,7 +119,7 @@ namespace personali_raport
             foreach (var process in Process.GetProcessesByName("EXCEL"))
             {
                 Debug.Print("Stopping Excel: {0}", process.Id);
-                process.CloseMainWindow();
+                process.Kill();
             }
         }
 
@@ -145,6 +154,14 @@ namespace personali_raport
             settings.reportType = ReportType.PERSREP;
 
             storedSettings = new IniFile();
+            
+            DatabaseConnected += (s, conn) => writer = new AccessWriter(conn);
+            DatabaseConnected += (s, conn) => pmReader = new PersonMessageReader(conn);
+            DatabaseConnected += (s, conn) => personnelReader = new AccessPersonnelReader(conn);
+            DatabaseConnected += (s, conn) => cardLogReader = new AccessLogReader(conn);
+            DatabaseConnected += (s, conn) => UpdateValidity();
+
+            DatabaseConnected += LoadCompanyList;
 
             // Load Access DB from the INI file if possible
             if (storedSettings.KeyExists("AccessDatabase") && File.Exists(storedSettings.Read("AccessDatabase")))
@@ -158,17 +175,12 @@ namespace personali_raport
                 Debug.Print("LOAD: Found stored PERSREP template file");
                 storedPersrepTemplate = storedSettings.Read("PersrepTemplate");
                 settings.reportTemplate = storedPersrepTemplate;
-                button1.Enabled = false;
-                // The default option is to generate a PERSREP, so enable generate button too.
-                generatePersrepBtn.Enabled = true;
             }
 
             if (storedSettings.KeyExists("AttendanceTemplate") && File.Exists(storedSettings.Read("AttendanceTemplate")))
             {
                 Debug.Print("LOAD: Found stored attendance template file");
                 storedAttendanceTemplate = storedSettings.Read("AttendanceTemplate");
-                button1.Enabled = false;
-                generatePersrepBtn.Enabled = true;
             }
 
             settings.personnelFileName = null;
@@ -203,6 +215,51 @@ namespace personali_raport
         }
 
         /// <summary>
+        /// Loads the list of companies to be displayed on the company filter box.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="conn"></param>
+        private void LoadCompanyList(object sender, OleDbConnection conn)
+        {
+            var cursor = conn.CreateCommand();
+            OleDbDataReader reader = null;
+            cursor.CommandText = "SELECT DISTINCT Yksus.Kompanii FROM Yksus;";
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Üksuse tabelit 'Yksus' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+            }
+
+            if (reader != null && reader.HasRows)
+            {
+                companyFilter.BeginUpdate();
+
+                companyFilter.Items.Clear();
+                while (reader.Read())
+                {
+                    companyFilter.Items.Add(reader.GetString(0));
+                }
+
+                companyFilter.EndUpdate();
+            } else
+            {
+                return;
+            }
+        }
+
+        /// <summary>
         /// Validate the selected options and decide whether we can generate the required
         /// report.
         /// Sets generatePersrepBtn.Enabled to true if everything is valid:
@@ -234,7 +291,7 @@ namespace personali_raport
             // Database related UX: 
             // Hide the database section & disable open DB button when DB is loaded
             // Allow collecting logs and hide the errors when DB is loaded
-            if (conn.State == System.Data.ConnectionState.Open)
+            if (conn?.State == System.Data.ConnectionState.Open)
             {
                 Debug.Print("UX update: DB open, allowing DB functionality");
                 openDatabaseButton.Enabled = false;
@@ -306,8 +363,7 @@ namespace personali_raport
                 saveReportButton.Enabled = false;
             }
 
-
-
+            // Does idreader2.exe exist?
             if (hasIDReaderBackend)
             {
                 Debug.Print("UX update: ID reader backend found!");
@@ -317,6 +373,15 @@ namespace personali_raport
                 Debug.Print("UX update: ID reader backend missing!");
                 startDataCollectionBtn.Enabled = false;
             }
+
+            // Is J1 enabled? If so, enable the J1 textbox.
+            j1Filter.Enabled = j1FilterEnabled.Checked;
+
+            // Is J2 enabled? If so, enable the J2 textbox.
+            j2Filter.Enabled = j2FilterEnabled.Checked;
+
+            // Is company filter enabled? If so, enable the company filter dropdown.
+            companyFilter.Enabled = companyFilterEnabled.Checked;
         }
 
         /// <summary>
@@ -336,6 +401,9 @@ namespace personali_raport
 
         /// <summary>
         /// Collect personnel file data and feed them to the ReportWriter.
+        /// For PERSREP (settings.reportType == PERSREP), the filter is a name of a company.
+        /// For ATTENDANCE, the filter is the name of a platoon.
+        /// Respectively, only members of the company / platoon are included.
         /// </summary>
         /// <seealso cref="IReportWriter"/>
         /// <seealso cref="PersrepReportWriter"/>
@@ -366,24 +434,55 @@ namespace personali_raport
                 reportWriter = null;
             }
 
+            DestroyAllExcel();
+
             if (!File.Exists(settings.reportTemplate))
             {
                 Debug.Print("Report template missing. {0}", settings.reportTemplate);
                 return;
             }
 
+            // Support J1 and J2 filters
+            int? j1 = null;
+
+            if (j1FilterEnabled.Checked)
+            {
+                j1 = (int) j1Filter.Value;
+            }
+
+            int? j2 = null;
+            if (j2FilterEnabled.Checked)
+            {
+                j2 = (int) j2Filter.Value;
+            } 
+
+            // Support Company filter
+            if (companyFilterEnabled.Checked && settings.filter == null)
+            {
+                settings.filter = companyFilter.Text;
+            }
+
+
             if (settings.reportType == ReportType.PERSREP)
             {
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
-                reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport));
+                reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
             } else if (settings.reportType == ReportType.ATTENDANCE)
             {
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
-                reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport));
+                reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
+            }
+
+            // Collect unknown people if no other filters than time are enabled
+            if (settings.filter == null && j2 == null && j1 == null)
+            {
+                var unknowns = cardLogReader.ReadUnknownPeople(settings.startOfReport, settings.endOfReport);
+                reportWriter.HandleUnknownPeople(unknowns);
             }
 
             reportReady = true;
             reportLoading = false;
+            settings.filter = null;
             UpdateValidity();
         }
 
@@ -399,8 +498,73 @@ namespace personali_raport
 
         private void OpenTreeReport()
         {
-            var tree = new TreeReport(cardLogReader);
-            tree.Show();
+            if (treeReportForm != null)
+            {
+                Debug.Print("Tree report already open, will not open a new one");
+                treeReportForm.BringToFront();
+                treeReportForm.ShowPeople();
+
+                return;
+            }
+            treeReportForm = new TreeReport(cardLogReader);
+            treeReportForm.Show();
+
+            // If the form closes, overwrite it with a null reference
+            treeReportForm.FormClosed += (sender, args) => treeReportForm = null;
+
+            treeReportForm.AttendanceReportRequested += tree_AttendanceReportRequested;
+            
+            treeReportForm.ShowPeople();
+        }
+
+        private void tree_AttendanceReportRequested(TreeReport sender, AttendanceReportRequestEventArgs e)
+        {
+            var platoon = e.Platoon;
+
+            // Report parameters:
+            // START DATE: same as in tree report
+            settings.startOfReport = sender.StartDate;
+            // END DATE: same as in tree report
+            settings.endOfReport = sender.EndDate;
+            // REPORT TYPE: Attendance
+            settings.reportType = ReportType.ATTENDANCE;
+
+            settings.filter = platoon;
+
+            if (storedAttendanceTemplate != null)
+            {
+                settings.reportTemplate = storedAttendanceTemplate;
+            } else
+            {
+                return;
+            }
+
+            GenerateReport();
+            saveReportButton_Click(null, null);
+        }
+
+        private void openDatabase(string databaseFileName)
+        {
+            try
+            {
+                conn = new OleDbConnection(GetConnectionString(databaseFileName));
+                conn.Open();
+                DatabaseConnected?.Invoke(this, conn);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+                databaseConnectionErrorMsg.Visible = true;
+                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+            }
+            catch (OleDbException ex)
+            {
+                Debug.Print(ex.ToString());
+                databaseConnectionErrorMsg.Visible = true;
+                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
+            }
+
+            UpdateValidity();
         }
 
         #region Form Event Handlers
@@ -500,33 +664,6 @@ namespace personali_raport
                 UpdateValidity();
             }
         }
-        private void openDatabase(string databaseFileName)
-        {
-            try
-            {
-                conn = new OleDbConnection(GetConnectionString(databaseFileName));
-                conn.Open();
-                writer = new AccessWriter(conn);
-                pmReader = new PersonMessageReader(conn);
-                personnelReader = new AccessPersonnelReader(conn);
-                cardLogReader = new AccessLogReader(conn);
-                Debug.Print("Database connected to: " + databaseFileName);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Debug.Print(ex.ToString());
-                databaseConnectionErrorMsg.Visible = true;
-                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-            }
-            catch (OleDbException ex)
-            {
-                Debug.Print(ex.ToString());
-                databaseConnectionErrorMsg.Visible = true;
-                databaseConnectionErrorMsg.Text = "Ühendus andmebaasiga ei olnud võimalik.";
-            }
-
-            UpdateValidity();
-        }
         private void startDataCollectionBtn_Click(object sender, EventArgs e)
         {
             Debug.Assert(writer != null, "Database writer was null during start data collection");
@@ -534,6 +671,9 @@ namespace personali_raport
             Debug.Assert(personnelReader != null, "PersonnelReader was null during start data collection");
             idCollectorForm = new IDCollectorForm(writer, pmReader, personnelReader);
             idCollectorForm.Show();
+
+            // When someone clicks "Hetkeseis" in tree view, open the tree report
+            idCollectorForm.TreeViewRequested += (s, e_) => OpenTreeReport();
         }
         private void button1_Click(object sender, EventArgs e)
         {
@@ -557,8 +697,19 @@ namespace personali_raport
         {
             OpenTreeReport();
         }
+        private void j1FilterEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateValidity();
+        }
+        private void j2FilterEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateValidity();
+        }
+        private void companyFilterEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateValidity();
+        }
         #endregion
-
     }
 }
 

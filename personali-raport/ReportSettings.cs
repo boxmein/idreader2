@@ -12,6 +12,6 @@ namespace personali_raport
         public string personnelFileName;
         public string reportTemplate;
         public string reportFileName;
-        public string[] dataFiles;
+        public string filter;
     }
 }

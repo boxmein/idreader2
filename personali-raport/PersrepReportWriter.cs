@@ -44,7 +44,8 @@ namespace personali_raport
         const int PERSREP_REMARKS_START_ROW = 86;
         const int PERSREP_REMARKS_HEIGHT = 22;
         const int PERSREP_REMARKS_WIDTH = 10;
-        const char PERSREP_REMARKS_START_COL = 'M';
+        const string PERSREP_REMARKS_START_COL = "M";
+        const string PERSREP_REMARKS_NAME_COL = "N";
         
         Worksheet worksheet;
         Workbook workbook;
@@ -63,6 +64,7 @@ namespace personali_raport
             Debug.Assert(File.Exists(fileName), "PERSREPReportWriter filename was not a real file");
             excelApp = new Application();
             excelApp.DisplayAlerts = false;
+            fileName = Path.GetFullPath(fileName);
             workbook = excelApp.Workbooks.Open(fileName);
             worksheet = excelApp.ActiveSheet;
         }
@@ -184,6 +186,16 @@ namespace personali_raport
         {
             Debug.Assert(false, "PersrepReportWriter cannot use AttendanceItems");
             throw new NotImplementedException();
+        }
+
+        public void HandleUnknownPeople(List<Person> personnel)
+        {
+            int startRow = PERSREP_REMARKS_START_ROW;
+            foreach (var person in personnel)
+            {
+                SetValueToCell(startRow, PERSREP_REMARKS_START_COL, "Tundmatu: " + person.data["Isikukood"]);
+                SetValueToCell(startRow, PERSREP_REMARKS_NAME_COL, person.data["Eesnimi"] + " " + person.data["Perekonnanimi"]);
+            }
         }
     }
 }

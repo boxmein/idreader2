@@ -57,6 +57,12 @@ namespace personali_raport
 
         private AccessWriter writer;
 
+        /// <summary>
+        /// This event fires when the user clicks the "Hetkeseis" button.
+        /// This event should open the tree view to show the current state of the field.
+        /// </summary>
+        public event EventHandler TreeViewRequested;
+
         public IDCollectorForm(AccessWriter w, PersonMessageReader reader, IPersonnelReader personnelReader)
         {
             Debug.Assert(w != null, "AccessWriter instance was null in IDCollectorForm constructor");
@@ -149,6 +155,7 @@ namespace personali_raport
             }
 
             Debug.Print("Stop data collection!");
+            
             try
             {
                 loggerProcess.CancelErrorRead();
@@ -413,6 +420,15 @@ namespace personali_raport
                     logPerson(f.firstName, f.lastName, idCode);
                 }
             }
+        }
+
+        /// <summary>
+        /// When the tree view button is clicked, fire the TreeViewRequested event.
+        /// </summary>
+        private void treeViewBtn_Click(object sender, EventArgs e)
+        {
+            Debug.Print("IDCollectorForm: showing hetkeseis");
+            TreeViewRequested?.Invoke(this, new EventArgs());
         }
     }
 }

@@ -37,6 +37,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.loggerScannedCountLabel = new System.Windows.Forms.Label();
+            this.treeViewBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // nameLabel
@@ -170,11 +171,28 @@
             this.loggerScannedCountLabel.Text = "0 inimest";
             this.loggerScannedCountLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // treeViewBtn
+            // 
+            this.treeViewBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeViewBtn.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.treeViewBtn.FlatAppearance.BorderSize = 0;
+            this.treeViewBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.treeViewBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(186)));
+            this.treeViewBtn.Location = new System.Drawing.Point(37, 361);
+            this.treeViewBtn.Margin = new System.Windows.Forms.Padding(4);
+            this.treeViewBtn.Name = "treeViewBtn";
+            this.treeViewBtn.Size = new System.Drawing.Size(148, 50);
+            this.treeViewBtn.TabIndex = 10;
+            this.treeViewBtn.Text = "Hetkeseis";
+            this.treeViewBtn.UseVisualStyleBackColor = false;
+            this.treeViewBtn.Click += new System.EventHandler(this.treeViewBtn_Click);
+            // 
             // IDCollectorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(921, 426);
+            this.Controls.Add(this.treeViewBtn);
             this.Controls.Add(this.loggerScannedCountLabel);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -205,5 +223,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label loggerScannedCountLabel;
+        private System.Windows.Forms.Button treeViewBtn;
     }
 }

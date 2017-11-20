@@ -40,58 +40,30 @@ namespace personali_raport
         const string TABLE_QUERY_WITH_DATES = "SELECT Kellaaeg, * FROM " + TABLE_NAME + " WHERE (Logi." + DATETIME_FIELD + " >= @start) AND (Logi." + DATETIME_FIELD + ") <= @end;";
 
         /// <summary>
-        /// Select a list of people with their platoon.
-        /// </summary>
-        const string ATTENDANCE_QUERY = @"SELECT 
-                                        Yksus.Eesnimi & ' ' & Yksus.Perekonnanimi AS Nimi, Yksus.Ryhm
-                                    FROM Yksus
-                                    INNER JOIN Logi
-                                        ON Logi.Isikukood = Yksus.Isikukood
-                                    WHERE Logi.Kellaaeg > @start 
-                                      AND Logi.Kellaaeg < @end
-                                    ORDER BY Logi.Kellaaeg ASC;";
-        /// <summary>
-        /// Select a list of people with their platoon, limited to only one platoon.
-        /// </summary>
-        const string ATTENDANCE_QUERY_PLATOON = @"SELECT 
-                                        Yksus.Eesnimi & ' ' & Yksus.Perekonnanimi AS Nimi, Yksus.Ryhm
-                                    FROM Yksus
-                                    INNER JOIN Logi
-                                        ON Logi.Isikukood = Yksus.Isikukood
-                                    WHERE Logi.Kellaaeg > @start 
-                                      AND Logi.Kellaaeg < @end
-                                      AND Yksus.Ryhm = @platoon
-                                    ORDER BY Logi.Kellaaeg ASC;";
-        /// <summary>
-        /// Select a count of each Company's members between the timestamps.
-        /// </summary>
-        const string PERSREP_QUERY = @"SELECT
-                                        Yksus.Kompanii,
-                                        SUM(IIF(Yksus.KKV='O',1,0)) AS Ohvitsere,
-                                        SUM(IIF(Yksus.KKV='AO',1,0)) AS Allohvitsere,
-                                        SUM(IIF(Yksus.KKV='S',1,0)) AS Sodureid,
-                                        SUM(IIF(Yksus.KKV='TSIV',1,0)) AS Tsiviliste
-                                    FROM Yksus
-                                    INNER JOIN Logi
-                                        ON Logi.Isikukood = Yksus.Isikukood
-                                    WHERE Logi.Kellaaeg > @start 
-                                      AND Logi.Kellaaeg < @end
-                                    GROUP BY Yksus.Kompanii;";
-
-        /// <summary>
         /// Select all serving people and whether or not they have been signed in.
+        /// This query also includes the people that are not in the üksuse tabel.
         /// </summary>
         const string TREE_QUERY = @"SELECT 
                                         Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi, 
-                                        Yksus.Kompanii, Yksus.Ryhm, COUNT(Logi.Kellaaeg) AS Kohal
+                                        Yksus.Kompanii, Yksus.Ryhm, Yksus.Ametikoht, COUNT(Logi.Kellaaeg) AS Kohal
                                     FROM Yksus 
                                     LEFT OUTER JOIN Logi 
                                         ON Logi.Isikukood = Yksus.Isikukood 
-                                    WHERE Logi.Kellaaeg >= @start
-                                        AND Logi.Kellaaeg <= @end
+                                    WHERE (Logi.Kellaaeg >= @start
+                                        AND Logi.Kellaaeg <= @end) OR Logi.Kellaaeg IS NULL
                                     GROUP BY Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi, 
-                                             Yksus.Kompanii, Yksus.Ryhm
+                                             Yksus.Kompanii, Yksus.Ryhm, Yksus.Ametikoht
                                     ORDER BY Yksus.Kompanii, Yksus.Ryhm ASC;";
+
+        /// <summary>
+        /// Select all people from the list that are not in the üksuse tabel.
+        /// </summary>
+        const string UNKNOWN_PEOPLE_QUERY = @"SELECT DISTINCT Logi.Eesnimi, Logi.Perekonnanimi, Logi.Isikukood FROM Logi 
+                                    LEFT OUTER JOIN Yksus 
+                                    ON Yksus.Isikukood = Logi.Isikukood 
+                                    WHERE Yksus.ID IS NULL
+                                      AND Logi.Kellaaeg >= @start 
+                                      AND Logi.Kellaaeg <= @end;";
 
         private OleDbConnection databaseConnection;
 
@@ -179,7 +151,55 @@ namespace personali_raport
             }
         }
 
-        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end) {
+        /// <summary>
+        /// Compose a PERSREP query.
+        /// </summary>
+        private string ComposePersrepQuery(bool hasCompanyFilter, bool hasj1Filter, bool hasj2Filter)
+        {
+            return "SELECT " + (hasCompanyFilter ? "Yksus.Ryhm" : "Yksus.Kompanii") + @",
+                        SUM(IIF(Yksus.KKV='O',1,0)) AS Ohvitsere,
+                        SUM(IIF(Yksus.KKV='AO',1,0)) AS Allohvitsere,
+                        SUM(IIF(Yksus.KKV='S',1,0)) AS Sodureid,
+                        SUM(IIF(Yksus.KKV='TSIV',1,0)) AS Tsiviliste
+                    FROM Yksus
+                    INNER JOIN (SELECT Isikukood, FIRST(Kellaaeg) FROM Logi WHERE Kellaaeg >= @start AND Kellaaeg <= @end GROUP BY Isikukood) Logi2
+                        ON Logi2.Isikukood = Yksus.Isikukood
+                    WHERE Logi2.Kellaaeg >= @start 
+                        AND Logi2.Kellaaeg <= @end"
+                    + (hasCompanyFilter ? " AND Yksus2.Kompanii = @company" : "")
+                    + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
+                    + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                    + " GROUP BY " 
+                    + (hasCompanyFilter ? "Yksus.Ryhm" : "Yksus.Kompanii") + ";";
+        }
+
+        /// <summary>
+        /// Compose an attendance query.
+        /// </summary>
+        private string ComposeAttendanceQuery(bool hasPlatoonFilter, bool hasj1Filter, bool hasj2Filter)
+        {
+            return @"SELECT Yksus.Eesnimi & ' ' & Yksus.Perekonnanimi AS Nimi, Yksus.Ryhm 
+                        FROM Yksus
+                        INNER JOIN (SELECT Isikukood, FIRST(Kellaaeg) AS Kell FROM Logi WHERE Kellaaeg >= @start AND Kellaaeg <= @end GROUP BY Isikukood) Logi2
+                            ON Logi2.Isikukood = Yksus.Isikukood
+                        WHERE Logi2.Kell >= @start
+                            AND Logi2.Kell <= @end"
+                        + (hasPlatoonFilter ? " AND Yksus.Ryhm = @platoon" : "")
+                        + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
+                        + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                        + " ORDER BY Logi2.Kell ASC";
+        }
+
+        /// <summary>
+        /// Read data for the PERSREP. 
+        /// Uses the PERSREP_QUERY.
+        /// The PERSREP report can be limited by the start & end dates, and by string matching a company.
+        /// </summary>
+        /// <param name="start">The minimum signin date, inclusive</param>
+        /// <param name="end">The maximum signin date, exclusive</param>
+        /// <param name="companyFilter">If present, limit people to only one company.</param>
+        /// <returns>List of PERSREP columns.</returns>
+        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end, string companyFilter = null, int? j1Filter = null, int? j2Filter = null) {
             Debug.Assert(start != null, "ReadPersrepData: start time was null");
             Debug.Assert(end != null, "ReadPersrepData: end time was null");
             var cursor = databaseConnection.CreateCommand();
@@ -188,13 +208,51 @@ namespace personali_raport
 
             var data = new List<PersrepItem>();
 
-            cursor.CommandText = PERSREP_QUERY;
-            
+            cursor.CommandText = ComposePersrepQuery(companyFilter != null, j1Filter != null, j2Filter != null);
+
+
+            Debug.Print(cursor.CommandText);
+            Debug.Print("company filter: {0}", companyFilter);
+            Debug.Print("j1 filter: {0}", j1Filter);
+            Debug.Print("j2 filter: {0}", j2Filter);
+
+            // NOTE: Parameters are order-specific only in access SQL. the @names don't matter, but are good for clarification.
+
             cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
             cursor.Parameters[0].Value = start;
 
             cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
             cursor.Parameters[1].Value = end;
+
+            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
+            cursor.Parameters[2].Value = start;
+
+            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
+            cursor.Parameters[3].Value = end;
+
+            if (companyFilter != null)
+            {
+                Debug.Print("Company filter active");
+                var param = new OleDbParameter("@company", OleDbType.VarWChar, companyFilter.Length);
+                param.Value = companyFilter;
+                cursor.Parameters.Add(param);
+            }
+
+            if (j1Filter != null)
+            {
+                Debug.Print("J1 filter active");
+                var param = new OleDbParameter("@j1", OleDbType.Integer);
+                param.Value = j1Filter;
+                cursor.Parameters.Add(param);
+            }
+
+            if (j2Filter != null)
+            {
+                Debug.Print("J2 filter active");
+                var param = new OleDbParameter("@j1", OleDbType.Integer);
+                param.Value = j2Filter;
+                cursor.Parameters.Add(param);
+            }
             
             CardLogEntry entry = null;
             OleDbDataReader reader = null;
@@ -229,7 +287,14 @@ namespace personali_raport
                 Debug.Print("ReadPersrepData: has rows");
                 while (reader.Read())
                 {
-                    string company = reader.GetString(reader.GetOrdinal("Kompanii"));
+                    string company;
+                    if (companyFilter == null)
+                    {
+                        company = reader.GetString(reader.GetOrdinal("Kompanii"));
+                    } else
+                    {
+                        company = reader.GetString(reader.GetOrdinal("Ryhm"));
+                    }
                     int ohvitsere = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Ohvitsere")));
                     int allohvitsere = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Allohvitsere")));
                     int sodureid = (int) Math.Round(reader.GetDouble(reader.GetOrdinal("Sodureid")));
@@ -254,13 +319,18 @@ namespace personali_raport
             return data;
         }
 
-        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string ryhm = null)
+        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string platoonFilter = null, int? j1Filter = null, int? j2Filter = null)
         {
             Debug.Assert(start != null, "ReadAttendanceData: start time was null");
             Debug.Assert(end != null, "ReadAttendanceData: end time was null");
             var cursor = databaseConnection.CreateCommand();
 
-            cursor.CommandText = ryhm == null ? ATTENDANCE_QUERY : ATTENDANCE_QUERY_PLATOON;
+            cursor.CommandText = ComposeAttendanceQuery(platoonFilter != null, j1Filter != null, j2Filter != null);
+
+            Debug.Print(cursor.CommandText);
+            Debug.Print("platoon filter: {0}", platoonFilter);
+            Debug.Print("j1 filter: {0}", j1Filter);
+            Debug.Print("j2 filter: {0}", j2Filter);
 
             cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
             cursor.Parameters[0].Value = start;
@@ -268,12 +338,37 @@ namespace personali_raport
             cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
             cursor.Parameters[1].Value = end;
 
+            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
+            cursor.Parameters[2].Value = start;
+
+            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
+            cursor.Parameters[3].Value = end;
+
             var data = new List<AttendanceItem>();
 
-            if (ryhm != null)
+            if (platoonFilter != null)
             {
-                cursor.Parameters.Add(new OleDbParameter("@platoon", OleDbType.VarChar, ryhm.Length));
-                cursor.Parameters[2].Value = ryhm;
+                Debug.Print("ReadAttendanceData: Using attendance for platoon: '{0}'", platoonFilter);
+                var param = new OleDbParameter("@platoon", OleDbType.VarWChar, platoonFilter.Length);
+                param.Value = platoonFilter;
+                cursor.Parameters.Add(param);
+            }
+
+            if (j1Filter != null)
+            {
+                Debug.Print("Using J1 filter in attendance");
+                var param = new OleDbParameter("@j1", OleDbType.Integer);
+                param.Value = j1Filter;
+
+                cursor.Parameters.Add(param);
+            }
+
+            if (j2Filter != null)
+            {
+                Debug.Print("Using J2 filter in attendance");
+                var param = new OleDbParameter("@j2", OleDbType.Integer);
+                param.Value = j2Filter;
+                cursor.Parameters.Add(j2Filter);
             }
 
             CardLogEntry entry = null;
@@ -316,10 +411,6 @@ namespace personali_raport
                         platoon = platoon
                     });
                 }
-            }
-            else
-            {
-                return data;
             }
             return data;
         }
@@ -379,6 +470,7 @@ namespace personali_raport
                     string lastName = reader.GetString(reader.GetOrdinal("Perekonnanimi"));
                     string company = reader.GetString(reader.GetOrdinal("Kompanii"));
                     string platoon = reader.GetString(reader.GetOrdinal("Ryhm"));
+                    string position = reader.GetString(reader.GetOrdinal("Ametikoht"));
                     string attends = reader.GetInt32(reader.GetOrdinal("Kohal")).ToString();
 
                     var p = new Person();
@@ -387,6 +479,77 @@ namespace personali_raport
                     p.data.Add("Kompanii", company);
                     p.data.Add("Ryhm", platoon);
                     p.data.Add("Kohal", attends);
+                    p.data.Add("Ametikoht", position);
+                    data.Add(p);
+                }
+            }
+            else
+            {
+                Debug.Print("ReadTreeViewData: no rows");
+                return data;
+            }
+            return data;
+        }
+
+        public List<Person> ReadUnknownPeople(DateTime start, DateTime end)
+        {
+            Debug.Assert(start != null, "ReadUnknownPeople: start time was null");
+            Debug.Assert(end != null, "ReadUnknownPeople: end time was null");
+            var cursor = databaseConnection.CreateCommand();
+
+            Debug.Print("ReadUnknownPeople: start");
+
+            var data = new List<Person>();
+
+            cursor.CommandText = UNKNOWN_PEOPLE_QUERY;
+
+            cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
+            cursor.Parameters[0].Value = start;
+
+            cursor.Parameters.Add(new OleDbParameter("@end", OleDbType.Date));
+            cursor.Parameters[1].Value = end;
+
+            CardLogEntry entry = null;
+            OleDbDataReader reader = null;
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+                return data;
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Logide või personali tabelit '" + TABLE_NAME + "' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+                return data;
+            }
+
+            if (reader == null)
+            {
+                Debug.Print("Something went wrong while reading.");
+                return data;
+            }
+
+            if (reader.HasRows)
+            {
+                Debug.Print("ReadTreeViewData: has rows");
+                while (reader.Read())
+                {
+                    string firstName = reader.GetString(reader.GetOrdinal("Eesnimi"));
+                    string lastName = reader.GetString(reader.GetOrdinal("Perekonnanimi"));
+                    string idCode = reader.GetString(reader.GetOrdinal("Isikukood"));
+
+                    var p = new Person();
+                    p.data.Add("Eesnimi", firstName);
+                    p.data.Add("Perekonnanimi", lastName);
+                    p.data.Add("Isikukood", idCode);
                     data.Add(p);
                 }
             }
@@ -421,8 +584,8 @@ namespace personali_raport
     public class PersrepItem
     {
         /// <summary>
-        /// The company that this PERSREP item counts.
-        /// Kompanii, mida on loendatud.
+        /// The company OR PLATOON that this PERSREP item counts.
+        /// Kompanii VÕI RÜHM, mida on loendatud.
         /// </summary>
         public string company;
 

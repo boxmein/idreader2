@@ -4,6 +4,8 @@ using Microsoft.Office.Interop.Excel;
 using System.Linq;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.IO;
 
 namespace personali_raport
 {
@@ -14,6 +16,7 @@ namespace personali_raport
 
         const string NAME_COL = "B";
         const string RANK_COL = "C";
+        const string REMARK_COL = "D";
         
         Worksheet worksheet;
         Workbook workbook;
@@ -32,6 +35,7 @@ namespace personali_raport
         {
             excelApp = new Application();
 
+            fileName = Path.GetFullPath(fileName);
             /// NOTE: COMExceptions here can be caused from a wrong installation of Excel.
             /// Install a clean Office 2010 and uninstall everything else, then reboot to fix.
             /// Also, don't use Office 16.0 Object Library.
@@ -57,6 +61,16 @@ namespace personali_raport
                 currentRow += 1;
             }
             return true;
+        }
+
+        public void HandleUnknownPeople(List<Person> personnel)
+        {
+            foreach(var person in personnel)
+            {
+                SetValueToCell(currentRow, NAME_COL, person.data["Eesnimi"] + " " + person.data["Perekonnanimi"]);
+                SetValueToCell(currentRow, REMARK_COL, "Tundmatu: " + person.data["Isikukood"]);
+                currentRow += 1;
+            }
         }
 
 
@@ -85,12 +99,11 @@ namespace personali_raport
         {
             try
             {
-                workbook.Close(false, Missing.Value, Missing.Value);
                 excelApp.Quit();
             }
-            catch (Exception)
+            catch (COMException)
             {
-                Debug.Print("Failed to close Excel app");
+                Debug.Print("Failed to close Excel app.");
             }
         }
 
