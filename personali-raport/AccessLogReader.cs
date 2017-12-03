@@ -154,7 +154,7 @@ namespace personali_raport
         /// <summary>
         /// Compose a PERSREP query.
         /// </summary>
-        private string ComposePersrepQuery(bool hasCompanyFilter, bool hasj1Filter, bool hasj2Filter)
+        private string ComposePersrepQuery(bool hasCompanyFilter, JFilter j1, JFilter j2)
         {
             return "SELECT " + (hasCompanyFilter ? "Logi2.Ryhm" : "Logi2.Kompanii") + @",
                         SUM(IIF(Yksus.KKV = 'O', 1, 0)) AS Ohvitsere,
@@ -170,8 +170,8 @@ namespace personali_raport
                             WHERE Logi.Kellaaeg >= @start
                               AND Logi.Kellaaeg <= @end
                               " + (hasCompanyFilter ? " AND Yksus.Kompanii = @company" : "")
-                                + (hasj1Filter ? " AND Yksus.J1 = @j1" : "")
-                                + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                                + (j1.enabled ? (j1.desiredValue == null ? " AND (Yksus.J1 IS NULL)" : " AND Yksus.J1 = @j1") : "")
+                                + (j2.enabled ? (j2.desiredValue == null ? " AND (Yksus.J2 IS NULL)" : " AND Yksus.J2 = @j2") : "")
                     +    @" GROUP BY Yksus.Isikukood, Yksus.Eesnimi, Yksus.Perekonnanimi,
                                     Yksus.Kompanii, Yksus.Ryhm, Yksus.Ametikoht, Yksus.KKV
                             ORDER BY Yksus.Kompanii, Yksus.Ryhm ASC) Logi2 
@@ -182,7 +182,7 @@ namespace personali_raport
         /// <summary>
         /// Compose an attendance query.
         /// </summary>
-        private string ComposeAttendanceQuery(bool hasCompanyFilter, bool hasPlatoonFilter, bool hasj1Filter, bool hasj2Filter)
+        private string ComposeAttendanceQuery(bool hasCompanyFilter, bool hasPlatoonFilter, JFilter j1, JFilter j2)
         {
             return @"SELECT 
                         Yksus.Eesnimi, Yksus.Perekonnanimi, Yksus.Ryhm
@@ -193,8 +193,8 @@ namespace personali_raport
                       AND Logi.Kellaaeg <= @end"
                     + (hasCompanyFilter ? " AND Yksus.Kompanii = @company" : "")
                     + (hasPlatoonFilter ? " AND Yksus.Ryhm = @platoon" : "") 
-                    + (hasj1Filter ? " AND Yksus.J1 = @j1" : "") 
-                    + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
+                    + (j1.enabled ? (j1.desiredValue == null ? " AND Yksus.J1 IS NULL" : " AND Yksus.J1 = @j1") : "") 
+                    + (j2.enabled ? (j2.desiredValue == null ? " AND Yksus.J2 IS NULL" : " AND Yksus.J2 = @j2") : "")
                     + " ORDER BY Logi.Kellaaeg ASC;";
         }
 
@@ -216,7 +216,7 @@ namespace personali_raport
             
             var data = new List<PersrepItem>();
 
-            cursor.CommandText = ComposePersrepQuery(companyFilter != null, j1.enabled, j2.enabled);
+            cursor.CommandText = ComposePersrepQuery(companyFilter != null, j1, j2);
 
 
             Debug.Print(cursor.CommandText);
@@ -240,22 +240,15 @@ namespace personali_raport
                 cursor.Parameters.Add(param);
             }
 
-            if (j1.enabled)
+            if (j1.enabled && j1.desiredValue != null)
             {
                 Debug.Print("J1 filter active");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
-                if (j1.desiredValue == null)
-                {
-                    param.Value = DBNull.Value;
-                }
-                else
-                {
-                    param.Value = j1.desiredValue;
-                }
+                param.Value = j1.desiredValue;
                 cursor.Parameters.Add(param);
             }
 
-            if (j2.enabled)
+            if (j2.enabled && j2.desiredValue != null)
             {
                 Debug.Print("J2 filter active");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
@@ -341,7 +334,7 @@ namespace personali_raport
             Debug.Assert(end != null, "ReadAttendanceData: end time was null");
             var cursor = databaseConnection.CreateCommand();
 
-            cursor.CommandText = ComposeAttendanceQuery(companyFilter != null, platoonFilter != null, j1.enabled, j2.enabled);
+            cursor.CommandText = ComposeAttendanceQuery(companyFilter != null, platoonFilter != null, j1, j2);
 
             Debug.Print("ReadAttendanceData: {0}", cursor.CommandText);
             Debug.Print("ReadAttendanceData: Start: {0}, End: {1} ", start, end);
@@ -375,7 +368,7 @@ namespace personali_raport
                 cursor.Parameters.Add(param);
             }
 
-            if (j1.enabled)
+            if (j1.enabled && j1.desiredValue != null)
             {
                 Debug.Print("Using J1 filter in attendance");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
@@ -390,7 +383,7 @@ namespace personali_raport
                 cursor.Parameters.Add(param);
             }
 
-            if (j2.enabled)
+            if (j2.enabled && j2.desiredValue != null)
             {
                 Debug.Print("Using J2 filter in attendance");
                 var param = new OleDbParameter("@j2", OleDbType.Integer);

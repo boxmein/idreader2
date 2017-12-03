@@ -316,7 +316,10 @@
             // 
             // saveReportButton
             // 
+            this.saveReportButton.BackColor = System.Drawing.SystemColors.Highlight;
             this.saveReportButton.Enabled = false;
+            this.saveReportButton.FlatAppearance.BorderSize = 0;
+            this.saveReportButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.saveReportButton.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.saveReportButton.Location = new System.Drawing.Point(225, 62);
             this.saveReportButton.Margin = new System.Windows.Forms.Padding(4);
@@ -324,7 +327,7 @@
             this.saveReportButton.Size = new System.Drawing.Size(160, 45);
             this.saveReportButton.TabIndex = 0;
             this.saveReportButton.Text = "Salvesta";
-            this.saveReportButton.UseVisualStyleBackColor = true;
+            this.saveReportButton.UseVisualStyleBackColor = false;
             this.saveReportButton.Click += new System.EventHandler(this.saveReportButton_Click);
             // 
             // groupBox2

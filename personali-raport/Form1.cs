@@ -326,17 +326,11 @@ namespace personali_raport
             if (reportLoading)
             {
                 Debug.Print("UX update: report loading!");
-                generatePersrepBtn.Visible = true;
-                generatePersrepBtn.Enabled = false;
-                saveReportButton.Visible = false;
                 generatePersrepBtn.Text = "Koostan...";
             }
             else if (parametersChanged)
             {
                 Debug.Print("Parameters changed");
-                generatePersrepBtn.Visible = true;
-                generatePersrepBtn.Enabled = true;
-                saveReportButton.Visible = false;
                 generatePersrepBtn.Text = "Alusta >>>";
                 parametersChanged = false;
                 reportReady = false;
@@ -344,44 +338,23 @@ namespace personali_raport
             else
             {
                 Debug.Print("UX update: Report not loading!");
-                generatePersrepBtn.Visible = false;
-                generatePersrepBtn.Enabled = true;
-                saveReportButton.Visible = true;
                 generatePersrepBtn.Text = "Alusta >>>";
             }
 
             // Report Ready UX: 
             // When a report is ready, hide the Generate button and instead show the Save button.
-            if (reportReady)
-            {
-                Debug.Print("UX update: report ready!");
-                generatePersrepBtn.Visible = false;
-                saveReportButton.Visible = true;
-                saveReportButton.Enabled = true;
-            }
-            else
-            {
-                Debug.Print("UX update: report not ready!");
-                generatePersrepBtn.Visible = true;
-                saveReportButton.Visible = false;
-                saveReportButton.Enabled = false;
-            }
+
+            generatePersrepBtn.Visible = !reportReady || parametersChanged || reportLoading;
+            saveReportButton.Visible = saveReportButton.Enabled = reportReady && !reportLoading;
 
 
             // Update "Generate report" button: 
             // If the start & end time are not null and the template file exists, allow generating
-            if (settings.startOfReport != null &&
-                settings.endOfReport != null &&
-                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
-            {
-                Debug.Print("UX update: All OK for report, allowing generation");
-                generatePersrepBtn.Enabled = true;
-            }
-            else
-            {
-                Debug.Print("UX update: Report times invalid OR report template missing, not allowing generate report");
-                generatePersrepBtn.Enabled = false;
-            }
+            generatePersrepBtn.Enabled = settings.startOfReport != null &&
+                                         settings.endOfReport != null &&
+                                         !reportLoading &&
+                                         settings.reportTemplate != null && 
+                                         File.Exists(settings.reportTemplate);
 
             // Does idreader2.exe exist?
             if (hasIDReaderBackend)
@@ -397,16 +370,44 @@ namespace personali_raport
             // Is J1 enabled? If so, enable the J1 textbox.
             j1Filter.Enabled = j1FilterEnabled.Checked;
 
+            if (!j1Filter.Enabled)
+            {
+                j1Filter.SelectedIndex = -1;
+            }
+
             // Is J2 enabled? If so, enable the J2 textbox.
             j2Filter.Enabled = j2FilterEnabled.Checked;
+
+            if (!j2Filter.Enabled)
+            {
+                j2Filter.SelectedIndex = -1;
+            }
 
             // Is company filter enabled? If so, enable the company filter dropdown.
             companyFilter.Enabled = companyFilterEnabled.Checked;
 
-            platoonFilterEnabled.Enabled = settings.reportType == ReportType.ATTENDANCE;
+            if (!companyFilter.Enabled)
+            {
+                companyFilter.SelectedIndex = -1;
+            }
+
+            platoonFilterEnabled.Enabled = settings.reportType == ReportType.ATTENDANCE && 
+                                           companyFilterEnabled.Checked && 
+                                           companyFilter.Text != "";
+
+            // Uncheck platoon when disabled
+            if (!platoonFilterEnabled.Enabled)
+            {
+                platoonFilterEnabled.Checked = false;
+            }
 
             // Is platoon filter enabled? If so, enable the dropdown. Only for ATTENDANCE reports.
-            platoonFilter.Enabled = platoonFilterEnabled.Checked && settings.reportType == ReportType.ATTENDANCE;
+            platoonFilter.Enabled = platoonFilterEnabled.Enabled && platoonFilterEnabled.Checked && settings.reportType == ReportType.ATTENDANCE;
+
+            if (!platoonFilter.Enabled)
+            {
+                platoonFilter.SelectedIndex = -1;
+            }
         }
 
         /// <summary>
@@ -570,6 +571,11 @@ namespace personali_raport
 
         private void GetPlatoonList(string company)
         {
+            if (company.Length == 0 || company == null)
+            {
+                Debug.Print("GetPlatoonList cannot fetch for null/empty company");
+                return;
+            }
             var cursor = conn.CreateCommand();
             cursor.CommandText = "SELECT DISTINCT Ryhm FROM Yksus WHERE Kompanii = @company;";
             var param = new OleDbParameter("@company", OleDbType.VarWChar, company.Length);
@@ -618,7 +624,7 @@ namespace personali_raport
             OleDbDataReader reader = null;
             cursor.CommandText = "SELECT DISTINCT J1 FROM Yksus";
 
-            if (company != null || platoon != null)
+            if ((company != null && company.Length > 0) || (platoon != null && platoon.Length > 0))
             {
                 cursor.CommandText += " WHERE ";
             }
@@ -696,7 +702,7 @@ namespace personali_raport
             OleDbDataReader reader = null;
             cursor.CommandText = "SELECT DISTINCT J2 FROM Yksus";
 
-            if (company != null || platoon != null)
+            if ((company != null && company.Length > 0) || (platoon != null && platoon.Length > 0))
             {
                 cursor.CommandText += " WHERE ";
             }
@@ -991,11 +997,13 @@ namespace personali_raport
         }
         private void j1FilterEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            GetJ1List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
             parametersChanged = true;
             UpdateValidity();
         }
         private void j2FilterEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            GetJ2List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
             parametersChanged = true;
             UpdateValidity();
         }
@@ -1008,8 +1016,8 @@ namespace personali_raport
         {
             parametersChanged = true;
             GetPlatoonList(companyFilter.Text);
-            GetJ1List(companyFilter.Text, platoonFilter.Text);
-            GetJ2List(companyFilter.Text, platoonFilter.Text);
+            GetJ1List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
+            GetJ2List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
             UpdateValidity();
         }
         private void platoonFilterEnabled_CheckedChanged(object sender, EventArgs e)
@@ -1019,8 +1027,8 @@ namespace personali_raport
         }
         private void platoonFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
-            GetJ1List(companyFilter.Text, platoonFilter.Text);
-            GetJ2List(companyFilter.Text, platoonFilter.Text);
+            GetJ1List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
+            GetJ2List(companyFilter.Enabled ? companyFilter.Text : null, platoonFilter.Enabled ? platoonFilter.Text : null);
         }
         private void j1Filter_SelectedIndexChanged(object sender, EventArgs e)
         {
