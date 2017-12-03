@@ -82,6 +82,8 @@ namespace personali_raport
         string storedPersrepTemplate;
         string storedAttendanceTemplate;
 
+        const string J_EMPTY_VALUE = "(puudub)";
+
         /// <summary>
         /// Is idreader2.exe present?
         /// </summary>
@@ -136,7 +138,8 @@ namespace personali_raport
             Debug.Print("Process exiting. Taking idreader2, and Access connection with.");
             
             // Close the database connection
-            if (conn.State == System.Data.ConnectionState.Open)
+            if (conn != null && 
+                conn.State == System.Data.ConnectionState.Open)
             {
                 conn.Close();
             }
@@ -317,22 +320,7 @@ namespace personali_raport
 
                 tabControl1.Enabled = false;
             }
-
-            // Update "Generate report" button: 
-            // If the start & end time are not null and the template file exists, allow generating
-            if (settings.startOfReport != null &&
-                settings.endOfReport != null &&
-                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
-            {
-                Debug.Print("UX update: All OK for report, allowing generation");
-                generatePersrepBtn.Enabled = true;
-            }
-            else
-            {
-                Debug.Print("UX update: Report times invalid OR report template missing, not allowing generate report");
-                generatePersrepBtn.Enabled = false;
-            }
-
+            
             // Report loading UX:
             // While a report is loading, show "Koostan..." and disable the button
             if (reportLoading)
@@ -342,7 +330,8 @@ namespace personali_raport
                 generatePersrepBtn.Enabled = false;
                 saveReportButton.Visible = false;
                 generatePersrepBtn.Text = "Koostan...";
-            } else if (parametersChanged)
+            }
+            else if (parametersChanged)
             {
                 Debug.Print("Parameters changed");
                 generatePersrepBtn.Visible = true;
@@ -369,12 +358,29 @@ namespace personali_raport
                 generatePersrepBtn.Visible = false;
                 saveReportButton.Visible = true;
                 saveReportButton.Enabled = true;
-            } else
+            }
+            else
             {
                 Debug.Print("UX update: report not ready!");
                 generatePersrepBtn.Visible = true;
                 saveReportButton.Visible = false;
                 saveReportButton.Enabled = false;
+            }
+
+
+            // Update "Generate report" button: 
+            // If the start & end time are not null and the template file exists, allow generating
+            if (settings.startOfReport != null &&
+                settings.endOfReport != null &&
+                settings.reportTemplate != null && File.Exists(settings.reportTemplate))
+            {
+                Debug.Print("UX update: All OK for report, allowing generation");
+                generatePersrepBtn.Enabled = true;
+            }
+            else
+            {
+                Debug.Print("UX update: Report times invalid OR report template missing, not allowing generate report");
+                generatePersrepBtn.Enabled = false;
             }
 
             // Does idreader2.exe exist?
@@ -395,10 +401,12 @@ namespace personali_raport
             j2Filter.Enabled = j2FilterEnabled.Checked;
 
             // Is company filter enabled? If so, enable the company filter dropdown.
-            companyFilter.Enabled = settings.reportType == ReportType.PERSREP && companyFilterEnabled.Checked;
+            companyFilter.Enabled = companyFilterEnabled.Checked;
 
-            // If the report type is PERSREP, allow Kompanii filtering.
-            companyFilterEnabled.Enabled = settings.reportType == ReportType.PERSREP;
+            platoonFilterEnabled.Enabled = settings.reportType == ReportType.ATTENDANCE;
+
+            // Is platoon filter enabled? If so, enable the dropdown. Only for ATTENDANCE reports.
+            platoonFilter.Enabled = platoonFilterEnabled.Checked && settings.reportType == ReportType.ATTENDANCE;
         }
 
         /// <summary>
@@ -455,56 +463,308 @@ namespace personali_raport
 
             if (!File.Exists(settings.reportTemplate))
             {
+                progressStatusLabel.Text = "Raporti põhi on puudu.";
                 Debug.Print("Report template missing. {0}", settings.reportTemplate);
+                reportReady = false;
+                reportLoading = false;
+                UpdateValidity();
                 return false;
             }
 
             // Support J1 and J2 filters
-            int? j1 = null;
+            JFilter j1 = new JFilter();
+            j1.enabled = false;
 
             if (j1FilterEnabled.Checked)
             {
-                j1 = (int) j1Filter.Value;
+                int x;
+                j1.enabled = true;
+                if (j1Filter.Text != J_EMPTY_VALUE)
+                {
+                    if (int.TryParse(j1Filter.Text, out x))
+                    {
+                        j1.desiredValue = x;
+                    }
+                    else
+                    {
+                        MessageBox.Show("J1 parameetris on viga. Ei saanud teisendada numbriks. Jätan arvestamata.", "Viga raporti genereerimisel");
+                    }
+                } else
+                {
+                    j1.desiredValue = null;
+                    Debug.Print("J1 must be empty");
+                }
             }
 
-            int? j2 = null;
+            JFilter j2 = new JFilter();
+            j2.enabled = false;
             if (j2FilterEnabled.Checked)
             {
-                j2 = (int) j2Filter.Value;
+                j2.enabled = true;
+                int x;
+                if (j2Filter.Text != J_EMPTY_VALUE)
+                {
+                    if (int.TryParse(j2Filter.Text, out x))
+                    {
+                        j2.desiredValue = x;
+                    }
+                    else
+                    {
+                        MessageBox.Show("J2 parameetris on viga. Ei saanud teisendada numbriks. Jätan arvestamata.", "Viga raporti genereerimisel");
+                    }
+                } else
+                {
+                    Debug.Print("J2 must be empty");
+                    j2.desiredValue = null;
+                }
             } 
 
             // Support Company filter
-            if (companyFilterEnabled.Enabled && companyFilterEnabled.Checked && settings.filter == null)
+            if (companyFilterEnabled.Enabled && companyFilterEnabled.Checked && settings.companyFilter == null)
             {
-                settings.filter = companyFilter.Text;
+                settings.companyFilter = companyFilter.Text;
             }
+
+            // Support Platoon filter
 
             bool success = false;
 
-
             if (settings.reportType == ReportType.PERSREP)
             {
+                progressStatusLabel.Text = "Koostan PERSREPi...";
                 reportWriter = new PersrepReportWriter(settings.reportTemplate);
-                success = reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
+                success = reportWriter.WriteReport(cardLogReader.ReadPersrepData(settings.startOfReport, settings.endOfReport, j1, j2, settings.companyFilter));
+                if (success)
+                {
+                    progressStatusLabel.Text = "PERSREP koostatud!";
+                }
             } else if (settings.reportType == ReportType.ATTENDANCE)
             {
+                progressStatusLabel.Text = "Koostan kohalolekukontrolli...";
                 reportWriter = new AttendanceReportWriter(settings.reportTemplate);
-                success = reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport, settings.filter, j1, j2));
+                success = reportWriter.WriteReport(cardLogReader.ReadAttendanceData(settings.startOfReport, settings.endOfReport, j1, j2, settings.companyFilter, settings.platoonFilter));
+                if (success)
+                {
+                    progressStatusLabel.Text = "Kohalolekukontroll koostatud!";
+                }
             }
 
             // Collect unknown people if no other filters than time are enabled
-            if (settings.filter == null && j2 == null && j1 == null)
+            if (settings.companyFilter == null && settings.platoonFilter == null && !j2.enabled && !j1.enabled)
             {
+                progressStatusLabel.Text = "Leian tundmatud inimesed...";
                 var unknowns = cardLogReader.ReadUnknownPeople(settings.startOfReport, settings.endOfReport);
                 reportWriter.HandleUnknownPeople(unknowns);
+                progressStatusLabel.Text = "Tundmatud leitud!";
             }
 
             reportReady = true;
             reportLoading = false;
-            settings.filter = null;
+            settings.companyFilter = settings.platoonFilter = null;
             UpdateValidity();
 
+            progressStatusLabel.Text = "Raport on valmis salvestamiseks.";
+
             return success;
+        }
+
+        private void GetPlatoonList(string company)
+        {
+            var cursor = conn.CreateCommand();
+            cursor.CommandText = "SELECT DISTINCT Ryhm FROM Yksus WHERE Kompanii = @company;";
+            var param = new OleDbParameter("@company", OleDbType.VarWChar, company.Length);
+            param.Value = company;
+            cursor.Parameters.Add(param);
+            OleDbDataReader reader = null;
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Üksuse tabelit 'Yksus' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+            }
+
+            if (reader != null && reader.HasRows)
+            {
+                platoonFilter.BeginUpdate();
+
+                platoonFilter.Items.Clear();
+                while (reader.Read())
+                {
+                    platoonFilter.Items.Add(reader.GetString(0));
+                }
+
+                platoonFilter.EndUpdate();
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        private void GetJ1List(string company = null, string platoon = null)
+        {
+            var cursor = conn.CreateCommand();
+            OleDbDataReader reader = null;
+            cursor.CommandText = "SELECT DISTINCT J1 FROM Yksus";
+
+            if (company != null || platoon != null)
+            {
+                cursor.CommandText += " WHERE ";
+            }
+
+            if (company != null && company.Length > 0)
+            {
+                Debug.Print("Using company filter for J1 list");
+                cursor.CommandText += "Kompanii = @company";
+                var param = new OleDbParameter("@company", OleDbType.VarWChar, company.Length);
+                param.Value = company;
+                cursor.Parameters.Add(param);
+            }
+
+            if (platoon != null && platoon.Length > 0)
+            {
+                Debug.Print("Using platoon filter for J1 list");
+                if (company != null)
+                {
+                    cursor.CommandText += " AND ";
+                }
+
+                cursor.CommandText += "Ryhm = @platoon";
+                var param = new OleDbParameter("@platoon", OleDbType.VarWChar, platoon.Length);
+                param.Value = platoon;
+                cursor.Parameters.Add(param);
+            }
+
+            cursor.CommandText += ";";
+
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Üksuse tabelit 'Yksus' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+            }
+
+            if (reader != null && reader.HasRows)
+            {
+                j1Filter.BeginUpdate();
+
+                j1Filter.Items.Clear();
+                while (reader.Read())
+                {
+                    if (reader[0] == DBNull.Value)
+                    {
+                        j1Filter.Items.Add(J_EMPTY_VALUE);
+                    } else
+                    {
+                        j1Filter.Items.Add(reader.GetInt32(0));
+                    }
+                }
+
+                j1Filter.EndUpdate();
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        private void GetJ2List(string company = null, string platoon = null)
+        {
+            var cursor = conn.CreateCommand();
+            OleDbDataReader reader = null;
+            cursor.CommandText = "SELECT DISTINCT J2 FROM Yksus";
+
+            if (company != null || platoon != null)
+            {
+                cursor.CommandText += " WHERE ";
+            }
+
+            if (company != null && company.Length > 0)
+            {
+                Debug.Print("Using company filter for J2 list, <{0}>", company);
+                cursor.CommandText += "Kompanii = @company";
+                var param = new OleDbParameter("@company", OleDbType.VarWChar, company.Length);
+                param.Value = company;
+                cursor.Parameters.Add(param);
+            }
+
+            if (platoon != null && platoon.Length > 0)
+            {
+                Debug.Print("Using platoon filter for J2 list, <{0}>", platoon);
+                if (company != null)
+                {
+                    cursor.CommandText += " AND ";
+                }
+
+                cursor.CommandText += "Ryhm = @platoon";
+                var param = new OleDbParameter("@platoon", OleDbType.VarWChar, platoon.Length);
+                param.Value = platoon;
+                cursor.Parameters.Add(param);
+            }
+
+            cursor.CommandText += ";";
+
+            try
+            {
+                cursor.Prepare();
+                reader = cursor.ExecuteReader();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.Print(ex.ToString());
+            }
+            catch (OleDbException ex)
+            {
+                if ((uint)ex.HResult == 0x80040E37)
+                {
+                    MessageBox.Show("Üksuse tabelit 'Yksus' ei eksisteeri.\nVeateade:\n" + ex.Message, "Viga Accessi andmebaasis");
+                }
+                Debug.Print(ex.ToString());
+            }
+
+            if (reader != null && reader.HasRows)
+            {
+                j2Filter.BeginUpdate();
+
+                j2Filter.Items.Clear();
+                while (reader.Read())
+                {
+                    if (reader[0] == DBNull.Value)
+                    {
+                        j2Filter.Items.Add(J_EMPTY_VALUE);
+                    } else {
+                        j2Filter.Items.Add(reader.GetInt32(0));
+                    }
+                }
+
+                j2Filter.EndUpdate();
+            }
+            else
+            {
+                return;
+            }
         }
 
         /// <summary>
@@ -540,6 +800,7 @@ namespace personali_raport
 
         private void tree_AttendanceReportRequested(TreeReport sender, AttendanceReportRequestEventArgs e)
         {
+            var company = e.Company;
             var platoon = e.Platoon;
 
             // Report parameters:
@@ -550,7 +811,8 @@ namespace personali_raport
             // REPORT TYPE: Attendance
             settings.reportType = ReportType.ATTENDANCE;
 
-            settings.filter = platoon;
+            settings.companyFilter = company;
+            settings.platoonFilter = platoon;
 
             if (storedAttendanceTemplate != null)
             {
@@ -742,25 +1004,41 @@ namespace personali_raport
             parametersChanged = true;
             UpdateValidity();
         }
-        #endregion
-
-        private void j1Filter_ValueChanged(object sender, EventArgs e)
-        {
-            parametersChanged = true;
-            UpdateValidity();
-        }
-
-        private void j2Filter_ValueChanged(object sender, EventArgs e)
-        {
-            parametersChanged = true;
-            UpdateValidity();
-        }
-
         private void companyFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
             parametersChanged = true;
+            GetPlatoonList(companyFilter.Text);
+            GetJ1List(companyFilter.Text, platoonFilter.Text);
+            GetJ2List(companyFilter.Text, platoonFilter.Text);
             UpdateValidity();
         }
+        private void platoonFilterEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
+        private void platoonFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            GetJ1List(companyFilter.Text, platoonFilter.Text);
+            GetJ2List(companyFilter.Text, platoonFilter.Text);
+        }
+        private void j1Filter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
+        private void j2Filter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            UpdateValidity();
+        }
+        #endregion
+
+    }
+    public struct JFilter
+    {
+        public int? desiredValue;
+        public bool enabled;
     }
 }
 

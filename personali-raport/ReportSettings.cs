@@ -12,6 +12,7 @@ namespace personali_raport
         public string personnelFileName;
         public string reportTemplate;
         public string reportFileName;
-        public string filter;
+        public string companyFilter;
+        public string platoonFilter;
     }
 }

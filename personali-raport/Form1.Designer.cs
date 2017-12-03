@@ -45,9 +45,6 @@
             this.dataSelectionEndDate = new System.Windows.Forms.DateTimePicker();
             this.dataSelectionStartDate = new System.Windows.Forms.DateTimePicker();
             this.timeFilterGroupBox = new System.Windows.Forms.GroupBox();
-            this.j2Filter = new System.Windows.Forms.NumericUpDown();
-            this.label1 = new System.Windows.Forms.Label();
-            this.j1Filter = new System.Windows.Forms.NumericUpDown();
             this.companyFilter = new System.Windows.Forms.ComboBox();
             this.progressStatusLabel = new System.Windows.Forms.Label();
             this.companyFilterEnabled = new System.Windows.Forms.CheckBox();
@@ -65,9 +62,11 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.hetkeseisBtn = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.platoonFilter = new System.Windows.Forms.ComboBox();
+            this.platoonFilterEnabled = new System.Windows.Forms.CheckBox();
+            this.j1Filter = new System.Windows.Forms.ComboBox();
+            this.j2Filter = new System.Windows.Forms.ComboBox();
             this.timeFilterGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).BeginInit();
             this.reportCreatorGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -84,7 +83,7 @@
             this.startDataCollectionBtn.FlatAppearance.BorderSize = 0;
             this.startDataCollectionBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.startDataCollectionBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startDataCollectionBtn.Location = new System.Drawing.Point(7, 8);
+            this.startDataCollectionBtn.Location = new System.Drawing.Point(6, 6);
             this.startDataCollectionBtn.Margin = new System.Windows.Forms.Padding(4);
             this.startDataCollectionBtn.Name = "startDataCollectionBtn";
             this.startDataCollectionBtn.Size = new System.Drawing.Size(396, 112);
@@ -181,8 +180,9 @@
             // timeFilterGroupBox
             // 
             this.timeFilterGroupBox.Controls.Add(this.j2Filter);
-            this.timeFilterGroupBox.Controls.Add(this.label1);
             this.timeFilterGroupBox.Controls.Add(this.j1Filter);
+            this.timeFilterGroupBox.Controls.Add(this.platoonFilter);
+            this.timeFilterGroupBox.Controls.Add(this.platoonFilterEnabled);
             this.timeFilterGroupBox.Controls.Add(this.companyFilter);
             this.timeFilterGroupBox.Controls.Add(this.progressStatusLabel);
             this.timeFilterGroupBox.Controls.Add(this.companyFilterEnabled);
@@ -198,51 +198,16 @@
             this.timeFilterGroupBox.Margin = new System.Windows.Forms.Padding(4);
             this.timeFilterGroupBox.Name = "timeFilterGroupBox";
             this.timeFilterGroupBox.Padding = new System.Windows.Forms.Padding(4);
-            this.timeFilterGroupBox.Size = new System.Drawing.Size(400, 290);
+            this.timeFilterGroupBox.Size = new System.Drawing.Size(400, 392);
             this.timeFilterGroupBox.TabIndex = 5;
             this.timeFilterGroupBox.TabStop = false;
             this.timeFilterGroupBox.Text = "Filtreerimine";
-            // 
-            // j2Filter
-            // 
-            this.j2Filter.Location = new System.Drawing.Point(291, 164);
-            this.j2Filter.Maximum = new decimal(new int[] {
-            99999,
-            0,
-            0,
-            0});
-            this.j2Filter.Name = "j2Filter";
-            this.j2Filter.Size = new System.Drawing.Size(101, 34);
-            this.j2Filter.TabIndex = 20;
-            this.j2Filter.ValueChanged += new System.EventHandler(this.j2Filter_ValueChanged);
-            // 
-            // label1
-            // 
-            this.label1.BackColor = System.Drawing.SystemColors.Control;
-            this.label1.Location = new System.Drawing.Point(17, 262);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(388, 43);
-            this.label1.TabIndex = 2;
-            // 
-            // j1Filter
-            // 
-            this.j1Filter.Location = new System.Drawing.Point(104, 164);
-            this.j1Filter.Maximum = new decimal(new int[] {
-            99999,
-            0,
-            0,
-            0});
-            this.j1Filter.Name = "j1Filter";
-            this.j1Filter.Size = new System.Drawing.Size(101, 34);
-            this.j1Filter.TabIndex = 19;
-            this.j1Filter.ValueChanged += new System.EventHandler(this.j1Filter_ValueChanged);
             // 
             // companyFilter
             // 
             this.companyFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.companyFilter.FormattingEnabled = true;
-            this.companyFilter.Location = new System.Drawing.Point(207, 204);
+            this.companyFilter.Location = new System.Drawing.Point(208, 170);
             this.companyFilter.Name = "companyFilter";
             this.companyFilter.Size = new System.Drawing.Size(185, 37);
             this.companyFilter.TabIndex = 18;
@@ -251,7 +216,7 @@
             // progressStatusLabel
             // 
             this.progressStatusLabel.BackColor = System.Drawing.SystemColors.Control;
-            this.progressStatusLabel.Location = new System.Drawing.Point(4, 239);
+            this.progressStatusLabel.Location = new System.Drawing.Point(8, 334);
             this.progressStatusLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.progressStatusLabel.Name = "progressStatusLabel";
             this.progressStatusLabel.Size = new System.Drawing.Size(388, 43);
@@ -261,11 +226,11 @@
             // 
             this.companyFilterEnabled.AutoSize = true;
             this.companyFilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.companyFilterEnabled.Location = new System.Drawing.Point(9, 208);
+            this.companyFilterEnabled.Location = new System.Drawing.Point(7, 170);
             this.companyFilterEnabled.Name = "companyFilterEnabled";
-            this.companyFilterEnabled.Size = new System.Drawing.Size(149, 33);
+            this.companyFilterEnabled.Size = new System.Drawing.Size(137, 33);
             this.companyFilterEnabled.TabIndex = 15;
-            this.companyFilterEnabled.Text = "Kompanii: ";
+            this.companyFilterEnabled.Text = "Kompanii";
             this.companyFilterEnabled.UseVisualStyleBackColor = true;
             this.companyFilterEnabled.CheckedChanged += new System.EventHandler(this.companyFilterEnabled_CheckedChanged);
             // 
@@ -273,7 +238,7 @@
             // 
             this.j2FilterEnabled.AutoSize = true;
             this.j2FilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.j2FilterEnabled.Location = new System.Drawing.Point(214, 165);
+            this.j2FilterEnabled.Location = new System.Drawing.Point(9, 297);
             this.j2FilterEnabled.Name = "j2FilterEnabled";
             this.j2FilterEnabled.Size = new System.Drawing.Size(72, 33);
             this.j2FilterEnabled.TabIndex = 14;
@@ -285,7 +250,7 @@
             // 
             this.j1FilterEnabled.AutoSize = true;
             this.j1FilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.j1FilterEnabled.Location = new System.Drawing.Point(9, 165);
+            this.j1FilterEnabled.Location = new System.Drawing.Point(9, 254);
             this.j1FilterEnabled.Name = "j1FilterEnabled";
             this.j1FilterEnabled.Size = new System.Drawing.Size(72, 33);
             this.j1FilterEnabled.TabIndex = 13;
@@ -365,11 +330,11 @@
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.openDatabaseButton);
-            this.groupBox2.Location = new System.Drawing.Point(13, 492);
+            this.groupBox2.Location = new System.Drawing.Point(16, 586);
             this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox2.Size = new System.Drawing.Size(412, 117);
+            this.groupBox2.Size = new System.Drawing.Size(412, 96);
             this.groupBox2.TabIndex = 14;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Andmebaasiühendus";
@@ -388,7 +353,7 @@
             // databaseConnectionErrorMsg
             // 
             this.databaseConnectionErrorMsg.ForeColor = System.Drawing.Color.Red;
-            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(8, 224);
+            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(8, 219);
             this.databaseConnectionErrorMsg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.databaseConnectionErrorMsg.Name = "databaseConnectionErrorMsg";
             this.databaseConnectionErrorMsg.Size = new System.Drawing.Size(350, 67);
@@ -406,7 +371,7 @@
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(420, 471);
+            this.tabControl1.Size = new System.Drawing.Size(420, 570);
             this.tabControl1.TabIndex = 19;
             // 
             // tabPage1
@@ -420,7 +385,7 @@
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage1.Size = new System.Drawing.Size(412, 429);
+            this.tabPage1.Size = new System.Drawing.Size(412, 528);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Kogumine";
             // 
@@ -429,7 +394,7 @@
             this.hetkeseisBtn.FlatAppearance.BorderSize = 0;
             this.hetkeseisBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.hetkeseisBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.hetkeseisBtn.Location = new System.Drawing.Point(7, 127);
+            this.hetkeseisBtn.Location = new System.Drawing.Point(6, 123);
             this.hetkeseisBtn.Name = "hetkeseisBtn";
             this.hetkeseisBtn.Size = new System.Drawing.Size(397, 85);
             this.hetkeseisBtn.TabIndex = 8;
@@ -446,16 +411,59 @@
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage2.Size = new System.Drawing.Size(412, 429);
+            this.tabPage2.Size = new System.Drawing.Size(412, 528);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Rapordid";
             this.tabPage2.Click += new System.EventHandler(this.tabPage2_Click);
+            // 
+            // platoonFilter
+            // 
+            this.platoonFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.platoonFilter.Enabled = false;
+            this.platoonFilter.FormattingEnabled = true;
+            this.platoonFilter.Location = new System.Drawing.Point(208, 211);
+            this.platoonFilter.Name = "platoonFilter";
+            this.platoonFilter.Size = new System.Drawing.Size(185, 37);
+            this.platoonFilter.TabIndex = 22;
+            this.platoonFilter.SelectedIndexChanged += new System.EventHandler(this.platoonFilter_SelectedIndexChanged);
+            // 
+            // platoonFilterEnabled
+            // 
+            this.platoonFilterEnabled.AutoSize = true;
+            this.platoonFilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.platoonFilterEnabled.Location = new System.Drawing.Point(8, 211);
+            this.platoonFilterEnabled.Name = "platoonFilterEnabled";
+            this.platoonFilterEnabled.Size = new System.Drawing.Size(98, 33);
+            this.platoonFilterEnabled.TabIndex = 21;
+            this.platoonFilterEnabled.Text = "Rühm";
+            this.platoonFilterEnabled.UseVisualStyleBackColor = true;
+            this.platoonFilterEnabled.CheckedChanged += new System.EventHandler(this.platoonFilterEnabled_CheckedChanged);
+            // 
+            // j1Filter
+            // 
+            this.j1Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.j1Filter.FormattingEnabled = true;
+            this.j1Filter.Location = new System.Drawing.Point(208, 252);
+            this.j1Filter.Name = "j1Filter";
+            this.j1Filter.Size = new System.Drawing.Size(188, 37);
+            this.j1Filter.TabIndex = 23;
+            this.j1Filter.SelectedIndexChanged += new System.EventHandler(this.j1Filter_SelectedIndexChanged);
+            // 
+            // j2Filter
+            // 
+            this.j2Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.j2Filter.FormattingEnabled = true;
+            this.j2Filter.Location = new System.Drawing.Point(208, 293);
+            this.j2Filter.Name = "j2Filter";
+            this.j2Filter.Size = new System.Drawing.Size(188, 37);
+            this.j2Filter.TabIndex = 24;
+            this.j2Filter.SelectedIndexChanged += new System.EventHandler(this.j2Filter_SelectedIndexChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(444, 622);
+            this.ClientSize = new System.Drawing.Size(444, 699);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.groupBox2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -467,8 +475,6 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.timeFilterGroupBox.ResumeLayout(false);
             this.timeFilterGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.j2Filter)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.j1Filter)).EndInit();
             this.reportCreatorGroupBox.ResumeLayout(false);
             this.reportCreatorGroupBox.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -504,11 +510,12 @@
         private System.Windows.Forms.Button hetkeseisBtn;
         private System.Windows.Forms.CheckBox j2FilterEnabled;
         private System.Windows.Forms.CheckBox j1FilterEnabled;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox companyFilterEnabled;
         private System.Windows.Forms.ComboBox companyFilter;
-        private System.Windows.Forms.NumericUpDown j2Filter;
-        private System.Windows.Forms.NumericUpDown j1Filter;
+        private System.Windows.Forms.ComboBox platoonFilter;
+        private System.Windows.Forms.CheckBox platoonFilterEnabled;
+        private System.Windows.Forms.ComboBox j2Filter;
+        private System.Windows.Forms.ComboBox j1Filter;
     }
 }
 

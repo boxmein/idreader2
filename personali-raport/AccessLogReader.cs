@@ -182,7 +182,7 @@ namespace personali_raport
         /// <summary>
         /// Compose an attendance query.
         /// </summary>
-        private string ComposeAttendanceQuery(bool hasPlatoonFilter, bool hasj1Filter, bool hasj2Filter)
+        private string ComposeAttendanceQuery(bool hasCompanyFilter, bool hasPlatoonFilter, bool hasj1Filter, bool hasj2Filter)
         {
             return @"SELECT 
                         Yksus.Eesnimi, Yksus.Perekonnanimi, Yksus.Ryhm
@@ -191,6 +191,7 @@ namespace personali_raport
                         ON Logi.Isikukood = Yksus.Isikukood
                     WHERE Logi.Kellaaeg >= @start 
                       AND Logi.Kellaaeg <= @end"
+                    + (hasCompanyFilter ? " AND Yksus.Kompanii = @company" : "")
                     + (hasPlatoonFilter ? " AND Yksus.Ryhm = @platoon" : "") 
                     + (hasj1Filter ? " AND Yksus.J1 = @j1" : "") 
                     + (hasj2Filter ? " AND Yksus.J2 = @j2" : "")
@@ -206,22 +207,22 @@ namespace personali_raport
         /// <param name="end">The maximum signin date, exclusive</param>
         /// <param name="companyFilter">If present, limit people to only one company.</param>
         /// <returns>List of PERSREP columns.</returns>
-        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end, string companyFilter = null, int? j1Filter = null, int? j2Filter = null) {
+        public List<PersrepItem> ReadPersrepData(DateTime start, DateTime end, JFilter j1, JFilter j2, string companyFilter = null) {
             Debug.Assert(start != null, "ReadPersrepData: start time was null");
             Debug.Assert(end != null, "ReadPersrepData: end time was null");
             var cursor = databaseConnection.CreateCommand();
 
             Debug.Print("ReadPersrepData: start");
-
+            
             var data = new List<PersrepItem>();
 
-            cursor.CommandText = ComposePersrepQuery(companyFilter != null, j1Filter != null, j2Filter != null);
+            cursor.CommandText = ComposePersrepQuery(companyFilter != null, j1.enabled, j2.enabled);
 
 
             Debug.Print(cursor.CommandText);
             Debug.Print("company filter: {0}", companyFilter);
-            Debug.Print("j1 filter: {0}", j1Filter);
-            Debug.Print("j2 filter: {0}", j2Filter);
+            Debug.Print("j1 filter: {0}", j1.enabled);
+            Debug.Print("j2 filter: {0}", j2.enabled);
 
             // NOTE: Parameters are order-specific only in access SQL. the @names don't matter, but are good for clarification.
 
@@ -239,19 +240,33 @@ namespace personali_raport
                 cursor.Parameters.Add(param);
             }
 
-            if (j1Filter != null)
+            if (j1.enabled)
             {
                 Debug.Print("J1 filter active");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
-                param.Value = j1Filter;
+                if (j1.desiredValue == null)
+                {
+                    param.Value = DBNull.Value;
+                }
+                else
+                {
+                    param.Value = j1.desiredValue;
+                }
                 cursor.Parameters.Add(param);
             }
 
-            if (j2Filter != null)
+            if (j2.enabled)
             {
                 Debug.Print("J2 filter active");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
-                param.Value = j2Filter;
+                if (j2.desiredValue == null)
+                {
+                    param.Value = DBNull.Value;
+                }
+                else
+                {
+                    param.Value = j2.desiredValue;
+                }
                 cursor.Parameters.Add(param);
             }
             
@@ -320,19 +335,20 @@ namespace personali_raport
             return data;
         }
 
-        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, string platoonFilter = null, int? j1Filter = null, int? j2Filter = null)
+        public List<AttendanceItem> ReadAttendanceData(DateTime start, DateTime end, JFilter j1, JFilter j2, string companyFilter = null, string platoonFilter = null)
         {
             Debug.Assert(start != null, "ReadAttendanceData: start time was null");
             Debug.Assert(end != null, "ReadAttendanceData: end time was null");
             var cursor = databaseConnection.CreateCommand();
 
-            cursor.CommandText = ComposeAttendanceQuery(platoonFilter != null, j1Filter != null, j2Filter != null);
+            cursor.CommandText = ComposeAttendanceQuery(companyFilter != null, platoonFilter != null, j1.enabled, j2.enabled);
 
             Debug.Print("ReadAttendanceData: {0}", cursor.CommandText);
             Debug.Print("ReadAttendanceData: Start: {0}, End: {1} ", start, end);
+            Debug.Print("ReadAttendanceData: company filter: {0}", companyFilter);
             Debug.Print("ReadAttendanceData: platoon filter: {0}", platoonFilter);
-            Debug.Print("ReadAttendanceData: j1 filter: {0}", j1Filter);
-            Debug.Print("ReadAttendanceData: j2 filter: {0}", j2Filter);
+            Debug.Print("ReadAttendanceData: j1 filter: {0}", j1.enabled);
+            Debug.Print("ReadAttendanceData: j2 filter: {0}", j2.enabled);
 
             cursor.Parameters.Add(new OleDbParameter("@start", OleDbType.Date));
             cursor.Parameters[0].Value = start;
@@ -342,28 +358,50 @@ namespace personali_raport
 
             var data = new List<AttendanceItem>();
 
+            if (companyFilter != null)
+            {
+                Debug.Print("ReadAttendanceData: Using company filter");
+                var param = new OleDbParameter("@company", OleDbType.VarWChar, companyFilter.Length);
+                param.Value = companyFilter;
+                cursor.Parameters.Add(param);
+            }
+
             if (platoonFilter != null)
             {
+                Debug.Assert(companyFilter != null, "Company filter cannot be null when platoon filter is active");
                 Debug.Print("ReadAttendanceData: Using attendance for platoon: '{0}'", platoonFilter);
                 var param = new OleDbParameter("@platoon", OleDbType.VarWChar, platoonFilter.Length);
                 param.Value = platoonFilter;
                 cursor.Parameters.Add(param);
             }
 
-            if (j1Filter != null)
+            if (j1.enabled)
             {
                 Debug.Print("Using J1 filter in attendance");
                 var param = new OleDbParameter("@j1", OleDbType.Integer);
-                param.Value = j1Filter;
+                if (j1.desiredValue == null)
+                {
+                    param.Value = DBNull.Value;
+                } else
+                {
+                    param.Value = j1.desiredValue;
+                }
 
                 cursor.Parameters.Add(param);
             }
 
-            if (j2Filter != null)
+            if (j2.enabled)
             {
                 Debug.Print("Using J2 filter in attendance");
                 var param = new OleDbParameter("@j2", OleDbType.Integer);
-                param.Value = j2Filter;
+                if (j2.desiredValue == null)
+                {
+                    param.Value = DBNull.Value;
+                }
+                else
+                {
+                    param.Value = j2.desiredValue;
+                }
                 cursor.Parameters.Add(param);
             }
 

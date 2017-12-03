@@ -178,10 +178,11 @@ namespace personali_raport
                 }
 
                 var platoon = unitTree.SelectedNode.Text;
+                var company = unitTree.SelectedNode.Parent.Text;
                 if (platoon != null)
                 {
-                    Debug.Print("Attendance for platoon: {0}", platoon);
-                    ev(this, new AttendanceReportRequestEventArgs(platoon));
+                    Debug.Print("Attendance for Company {1} platoon: {0}", platoon, company);
+                    ev(this, new AttendanceReportRequestEventArgs(company, platoon));
                 }
             }
         }
@@ -224,14 +225,24 @@ namespace personali_raport
 
     public class AttendanceReportRequestEventArgs : EventArgs
     {
-        public AttendanceReportRequestEventArgs(string platoon)
+        public AttendanceReportRequestEventArgs(string company, string platoon)
         {
+            this.company = company;
             this.platoon = platoon;
         }
+
         private string platoon;
+        private string company;
+
+
         public string Platoon
         {
             get { return platoon; }
+        }
+
+        public string Company
+        {
+            get { return company; }
         }
     }
 }
