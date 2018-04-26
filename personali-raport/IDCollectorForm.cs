@@ -197,11 +197,11 @@ namespace personali_raport
             {
                 customTextLabel.Text = customText;
                 customTextLabel.BackColor = System.Drawing.Color.Transparent;
-            } else if (this.showRedWhenNoMessage)
+            } else
             {
-                customTextLabel.BackColor = System.Drawing.Color.Red;
-                customTextLabel.Text = "Inimesel puudub individuaalteade!";
-            } 
+                customTextLabel.BackColor =  this.showRedWhenNoMessage ? System.Drawing.Color.Red : System.Drawing.Color.Transparent;
+                customTextLabel.Text = "Inimesel puudub isikuteade!";
+            }
         }
         
         public void SetError(string error)
@@ -391,7 +391,7 @@ namespace personali_raport
 
         private void onLoggerProcessExited(object sender, EventArgs args)
         {
-            Debug.Print("Logger exit: {0}", loggerProcess.ExitCode);
+            Debug.Print("Logger exit: {0}", loggerProcess?.ExitCode);
             // MessageBox.Show("ID-kaardi lugeja lõpetas ootamatult töötamise.\nKogutud andmed võivad olla puudulikud või vigased, kuid logid on siiski alles.", "Viga logeri töös", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 

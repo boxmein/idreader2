@@ -191,6 +191,13 @@ namespace personali_raport
                 storedAttendanceTemplate = storedSettings.Read("AttendanceTemplate");
             }
 
+            if (storedSettings.KeyExists("RedWhenNoPersonalMessage"))
+            {
+                Debug.Print("LOAD: Found stored RedWhenNoPersonalMessage");
+                bool showRed = storedSettings.Read("RedWhenNoPersonalMessage") == "true";
+                this.showRedWhenNoMessageCheckbox.Checked = showRed;
+            }
+
             settings.personnelFileName = null;
             settings.reportFileName = null;
 
@@ -968,6 +975,8 @@ namespace personali_raport
             Debug.Assert(pmReader != null, "PersonMessageReader was null during start data collection");
             Debug.Assert(personnelReader != null, "PersonnelReader was null during start data collection");
             idCollectorForm = new IDCollectorForm(writer, pmReader, personnelReader);
+            // Allow setting "show red when no message" from stored settings
+            idCollectorForm.showRedWhenNoMessage = storedSettings.Read("RedWhenNoPersonalMessage") == "true";
             idCollectorForm.Show();
 
             // When someone clicks "Hetkeseis" in tree view, open the tree report
@@ -1040,8 +1049,15 @@ namespace personali_raport
             parametersChanged = true;
             UpdateValidity();
         }
-        #endregion
 
+        private void showRedWhenNoMessageCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            parametersChanged = true;
+            string checkedString = this.showRedWhenNoMessageCheckbox.Checked ? "true" : "false";
+            storedSettings.Write("RedWhenNoPersonalMessage", checkedString);
+            UpdateValidity();
+        }
+        #endregion
     }
     public struct JFilter
     {

@@ -45,6 +45,10 @@
             this.dataSelectionEndDate = new System.Windows.Forms.DateTimePicker();
             this.dataSelectionStartDate = new System.Windows.Forms.DateTimePicker();
             this.timeFilterGroupBox = new System.Windows.Forms.GroupBox();
+            this.j2Filter = new System.Windows.Forms.ComboBox();
+            this.j1Filter = new System.Windows.Forms.ComboBox();
+            this.platoonFilter = new System.Windows.Forms.ComboBox();
+            this.platoonFilterEnabled = new System.Windows.Forms.CheckBox();
             this.companyFilter = new System.Windows.Forms.ComboBox();
             this.progressStatusLabel = new System.Windows.Forms.Label();
             this.companyFilterEnabled = new System.Windows.Forms.CheckBox();
@@ -62,10 +66,7 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.hetkeseisBtn = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.platoonFilter = new System.Windows.Forms.ComboBox();
-            this.platoonFilterEnabled = new System.Windows.Forms.CheckBox();
-            this.j1Filter = new System.Windows.Forms.ComboBox();
-            this.j2Filter = new System.Windows.Forms.ComboBox();
+            this.showRedWhenNoMessageCheckbox = new System.Windows.Forms.CheckBox();
             this.timeFilterGroupBox.SuspendLayout();
             this.reportCreatorGroupBox.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -95,7 +96,7 @@
             // loggerErrorLabel
             // 
             this.loggerErrorLabel.ForeColor = System.Drawing.Color.Red;
-            this.loggerErrorLabel.Location = new System.Drawing.Point(8, 226);
+            this.loggerErrorLabel.Location = new System.Drawing.Point(13, 274);
             this.loggerErrorLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.loggerErrorLabel.Name = "loggerErrorLabel";
             this.loggerErrorLabel.Size = new System.Drawing.Size(350, 65);
@@ -202,6 +203,49 @@
             this.timeFilterGroupBox.TabIndex = 5;
             this.timeFilterGroupBox.TabStop = false;
             this.timeFilterGroupBox.Text = "Filtreerimine";
+            // 
+            // j2Filter
+            // 
+            this.j2Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.j2Filter.FormattingEnabled = true;
+            this.j2Filter.Location = new System.Drawing.Point(208, 293);
+            this.j2Filter.Name = "j2Filter";
+            this.j2Filter.Size = new System.Drawing.Size(188, 37);
+            this.j2Filter.TabIndex = 24;
+            this.j2Filter.SelectedIndexChanged += new System.EventHandler(this.j2Filter_SelectedIndexChanged);
+            // 
+            // j1Filter
+            // 
+            this.j1Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.j1Filter.FormattingEnabled = true;
+            this.j1Filter.Location = new System.Drawing.Point(208, 252);
+            this.j1Filter.Name = "j1Filter";
+            this.j1Filter.Size = new System.Drawing.Size(188, 37);
+            this.j1Filter.TabIndex = 23;
+            this.j1Filter.SelectedIndexChanged += new System.EventHandler(this.j1Filter_SelectedIndexChanged);
+            // 
+            // platoonFilter
+            // 
+            this.platoonFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.platoonFilter.Enabled = false;
+            this.platoonFilter.FormattingEnabled = true;
+            this.platoonFilter.Location = new System.Drawing.Point(208, 211);
+            this.platoonFilter.Name = "platoonFilter";
+            this.platoonFilter.Size = new System.Drawing.Size(185, 37);
+            this.platoonFilter.TabIndex = 22;
+            this.platoonFilter.SelectedIndexChanged += new System.EventHandler(this.platoonFilter_SelectedIndexChanged);
+            // 
+            // platoonFilterEnabled
+            // 
+            this.platoonFilterEnabled.AutoSize = true;
+            this.platoonFilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.platoonFilterEnabled.Location = new System.Drawing.Point(8, 211);
+            this.platoonFilterEnabled.Name = "platoonFilterEnabled";
+            this.platoonFilterEnabled.Size = new System.Drawing.Size(98, 33);
+            this.platoonFilterEnabled.TabIndex = 21;
+            this.platoonFilterEnabled.Text = "Rühm";
+            this.platoonFilterEnabled.UseVisualStyleBackColor = true;
+            this.platoonFilterEnabled.CheckedChanged += new System.EventHandler(this.platoonFilterEnabled_CheckedChanged);
             // 
             // companyFilter
             // 
@@ -356,7 +400,7 @@
             // databaseConnectionErrorMsg
             // 
             this.databaseConnectionErrorMsg.ForeColor = System.Drawing.Color.Red;
-            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(8, 219);
+            this.databaseConnectionErrorMsg.Location = new System.Drawing.Point(13, 274);
             this.databaseConnectionErrorMsg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.databaseConnectionErrorMsg.Name = "databaseConnectionErrorMsg";
             this.databaseConnectionErrorMsg.Size = new System.Drawing.Size(350, 67);
@@ -380,6 +424,7 @@
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage1.Controls.Add(this.showRedWhenNoMessageCheckbox);
             this.tabPage1.Controls.Add(this.hetkeseisBtn);
             this.tabPage1.Controls.Add(this.databaseConnectionErrorMsg);
             this.tabPage1.Controls.Add(this.loggerErrorLabel);
@@ -419,48 +464,16 @@
             this.tabPage2.Text = "Rapordid";
             this.tabPage2.Click += new System.EventHandler(this.tabPage2_Click);
             // 
-            // platoonFilter
+            // showRedWhenNoMessageCheckbox
             // 
-            this.platoonFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.platoonFilter.Enabled = false;
-            this.platoonFilter.FormattingEnabled = true;
-            this.platoonFilter.Location = new System.Drawing.Point(208, 211);
-            this.platoonFilter.Name = "platoonFilter";
-            this.platoonFilter.Size = new System.Drawing.Size(185, 37);
-            this.platoonFilter.TabIndex = 22;
-            this.platoonFilter.SelectedIndexChanged += new System.EventHandler(this.platoonFilter_SelectedIndexChanged);
-            // 
-            // platoonFilterEnabled
-            // 
-            this.platoonFilterEnabled.AutoSize = true;
-            this.platoonFilterEnabled.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.platoonFilterEnabled.Location = new System.Drawing.Point(8, 211);
-            this.platoonFilterEnabled.Name = "platoonFilterEnabled";
-            this.platoonFilterEnabled.Size = new System.Drawing.Size(98, 33);
-            this.platoonFilterEnabled.TabIndex = 21;
-            this.platoonFilterEnabled.Text = "Rühm";
-            this.platoonFilterEnabled.UseVisualStyleBackColor = true;
-            this.platoonFilterEnabled.CheckedChanged += new System.EventHandler(this.platoonFilterEnabled_CheckedChanged);
-            // 
-            // j1Filter
-            // 
-            this.j1Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.j1Filter.FormattingEnabled = true;
-            this.j1Filter.Location = new System.Drawing.Point(208, 252);
-            this.j1Filter.Name = "j1Filter";
-            this.j1Filter.Size = new System.Drawing.Size(188, 37);
-            this.j1Filter.TabIndex = 23;
-            this.j1Filter.SelectedIndexChanged += new System.EventHandler(this.j1Filter_SelectedIndexChanged);
-            // 
-            // j2Filter
-            // 
-            this.j2Filter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.j2Filter.FormattingEnabled = true;
-            this.j2Filter.Location = new System.Drawing.Point(208, 293);
-            this.j2Filter.Name = "j2Filter";
-            this.j2Filter.Size = new System.Drawing.Size(188, 37);
-            this.j2Filter.TabIndex = 24;
-            this.j2Filter.SelectedIndexChanged += new System.EventHandler(this.j2Filter_SelectedIndexChanged);
+            this.showRedWhenNoMessageCheckbox.AutoSize = true;
+            this.showRedWhenNoMessageCheckbox.Location = new System.Drawing.Point(18, 223);
+            this.showRedWhenNoMessageCheckbox.Name = "showRedWhenNoMessageCheckbox";
+            this.showRedWhenNoMessageCheckbox.Size = new System.Drawing.Size(357, 33);
+            this.showRedWhenNoMessageCheckbox.TabIndex = 9;
+            this.showRedWhenNoMessageCheckbox.Text = "Punane kui isikuteade puudub";
+            this.showRedWhenNoMessageCheckbox.UseVisualStyleBackColor = true;
+            this.showRedWhenNoMessageCheckbox.CheckedChanged += new System.EventHandler(this.showRedWhenNoMessageCheckbox_CheckedChanged);
             // 
             // Form1
             // 
@@ -483,6 +496,7 @@
             this.groupBox2.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -519,6 +533,7 @@
         private System.Windows.Forms.CheckBox platoonFilterEnabled;
         private System.Windows.Forms.ComboBox j2Filter;
         private System.Windows.Forms.ComboBox j1Filter;
+        private System.Windows.Forms.CheckBox showRedWhenNoMessageCheckbox;
     }
 }
 
